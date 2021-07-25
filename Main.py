@@ -47,11 +47,14 @@ def main():
                         if move in legal_moves:
                             gamestate.make_move(move)
                             move_made = True
-                        sq_selected = ()  # reset clicks
-                        mouse_clicks = []
+                            sq_selected = ()  # reset clicks
+                            mouse_clicks = []
+                        else:  # invalid move or player clicked another piece
+                            mouse_clicks = [sq_selected]
+
         if move_made:
             legal_moves = gamestate.get_legal_moves()
-        Display.display_board(screen, gamestate)
+        Display.display_board(screen, gamestate, sq_selected, legal_moves)
         clock.tick(FPS)
         p.display.flip()
 

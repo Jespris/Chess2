@@ -25,10 +25,10 @@ def load_images():
         IMAGES[piece] = p.transform.scale(p.image.load('images/' + piece + '.png'), (SQ_SIZE, SQ_SIZE))
 
 
-
-def display_board(screen, gamestate):
+def display_board(screen, gamestate, square_selected, legal_moves):
     display_squares(screen)
-    display_legal_squares(screen, gamestate)
+    display_square_selected(screen, square_selected)
+    display_legal_squares(screen, gamestate, square_selected, legal_moves)
     display_pieces(screen, gamestate)
 
 
@@ -44,11 +44,19 @@ def display_squares(screen):
             p.draw.rect(screen, color, p.Rect(BOARDGAP + col * SQ_SIZE, BOARDGAP + row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
-def display_legal_squares(screen, gamestate):
-    for square in gamestate.legal_moves:
-        p.draw.rect(screen, p.Color("gray"), p.Rect(BOARDGAP + square[0] * SQ_SIZE + SQ_SIZE // 4,
-                                                    BOARDGAP + square[1] * SQ_SIZE + SQ_SIZE // 4,
-                                                    SQ_SIZE // 2, SQ_SIZE // 2))
+def display_square_selected(screen, square):
+    if square:
+        p.draw.rect(screen, p.Color("gold"), p.Rect(BOARDGAP + square[1] * SQ_SIZE, BOARDGAP + square[0] * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
+def display_legal_squares(screen, gamestate, square_selected, legal_moves):
+    if square_selected:
+        for move in legal_moves:
+            if move.start_row == square_selected[0] and move.start_col == square_selected[1]:
+                p.draw.rect(screen, p.Color("gray"), p.Rect(BOARDGAP + move.end_col * SQ_SIZE + SQ_SIZE // 4,
+                                                            BOARDGAP + move.end_row * SQ_SIZE + SQ_SIZE // 4,
+                                                            SQ_SIZE // 2, SQ_SIZE // 2))
+
 
 def display_pieces(screen, gamestate):
     for row in range(8):
