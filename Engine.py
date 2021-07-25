@@ -27,34 +27,24 @@ class GameState:
             ['wp', 'wp', 'wp', 'wp', '--', 'wp', 'wp', 'wp'],
             ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr'],
         ]
-        self.mouse_clicks = []
         self.legal_moves = []
+        self.move_log = []
         self.white_to_move = True
+        self.white_castling_rights = [True, True]  # Queenside, Kingside
+        self.black_castling_rights = [True, True]
+        self.flip_board = False
 
-    def mouseclicks(self, pos):
-        if BOARDGAP < pos[0] < BOARDGAP + 8 * SQ_SIZE and BOARDGAP < pos[1] < BOARDGAP + 8 * SQ_SIZE:
-            square_clicked = [(pos[0] - BOARDGAP) // SQ_SIZE, (pos[1] - BOARDGAP) // SQ_SIZE]  # col, row
-            print(square_clicked)
-            ally_piece = 'w' if self.white_to_move else 'b'
-            if self.board[square_clicked[1]][square_clicked[0]][0] == ally_piece:  # white clicked a white piece
-                self.mouse_clicks = [square_clicked]
-                self.get_legal_moves(self.mouse_clicks[0])
-            else:
-                if self.mouse_clicks:
-                    if square_clicked in self.legal_moves:
-                        # white has a piece selected and moves to an empty square or captures
-                        self.mouse_clicks.append(square_clicked)
-                        self.make_move()
+    """
+    MOVE
+    """
 
-    def make_move(self):
-        new_square = self.mouse_clicks[1]
-        old_square = self.mouse_clicks[0]
-        piece_moved = self.board[old_square[1]][old_square[0]]
-        self.board[new_square[1]][new_square[0]] = piece_moved
-        self.board[old_square[1]][old_square[0]] = '--'
+    def make_move(self, move):
+        self.board[move.start_row][move.start_col] = '--'
+        self.board[move.end_row][move.end_col] = move.piece_moved
+        self.move_log.append(move)
         self.white_to_move = not self.white_to_move
-        self.mouse_clicks = []
-        self.legal_moves = []
+
+
 
     def get_legal_moves(self, from_square):
         piece_type = self.board[from_square[1]][from_square[0]][1]
@@ -81,7 +71,6 @@ class GameState:
                 enemy = 'b' if self.white_to_move else 'w'
                 if self.board[new_row][new_col] == '--' or self.board[new_row][new_col][0] == enemy:
                     legal.append([new_col, new_row])
-        self.legal_moves = legal
 
     def get_pawn_moves(self, square):
         legal = []
@@ -100,10 +89,43 @@ class GameState:
                 if 0 <= new_col < 8:
                     if self.board[new_row][new_col][0] == enemy:
                         legal.append([new_col, new_row])
-        self.legal_moves = legal
 
     def get_rook_moves(self, square):
         pass
+
+    def get_bishop_moves(self, square):
+        pass
+
+    def get_knight_moves(self, square):
+        pass
+
+    def get_queen_moves(self, square):
+        pass
+
+
+class Move:
+
+    ranks_to_rows = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
+    rows_to_ranks = {v: k for k, v in ranks_to_rows.items()}
+
+    files_to_cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
+    cols_to_files = {v: k for k, v in files_to_cols.items()}
+
+    def __init__(self, start_sq, end_sq, board):
+        self.start_row = start_sq[0]
+        self.start_col = start_sq[1]
+        self.end_row = end_sq[0]
+        self.end_col = end_sq[1]
+        self.piece_moved = board[self.start_row][self.start_col]
+        self.piece_captured = board[self.end_row][self.end_col]
+
+    def get_notation(self):
+        piece = '' if self.piece_moved[1] == 'p' else self.piece_moved[1].upper()
+        return piece + self.get_rank_file(self.end_row, self.end_col)
+
+    def get_rank_file(self, r, c):
+        return self.cols_to_files[c] + self.rows_to_ranks[r]
+
 
 
 

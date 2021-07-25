@@ -16,6 +16,8 @@ def main():
     screen.fill(p.Color("Gray"))
     gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
     clock = p.time.Clock()
+    sq_selected = ()
+    mouse_clicks = []
     Display.load_images()
     flag = True
     while flag:
@@ -25,13 +27,24 @@ def main():
                     flag = False
             if e.type == p.MOUSEBUTTONDOWN:
                 mouse_pos = p.mouse.get_pos()
-                gamestate.mouseclicks(mouse_pos)
+                col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE
+                row = (mouse_pos[1] - BOARDGAP) // SQ_SIZE
+                if sq_selected == (row, col):  # same piece twice
+                    sq_selected = ()  # deselect
+                    mouse_clicks = []
+                else:
+                    sq_selected = (row, col)
+                    mouse_clicks.append(sq_selected)
+                if len(mouse_clicks) == 2:  # successful move
+                    move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
+                    print(move.get_notation())
+                    gamestate.make_move(move)
+                    sq_selected = ()  # reset clicks
+                    mouse_clicks = []
+
         Display.display_board(screen, gamestate)
         clock.tick(FPS)
         p.display.flip()
-
-
-
 
 
 if __name__ == "__main__":
