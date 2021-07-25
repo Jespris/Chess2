@@ -38,18 +38,29 @@ def main():
                     if sq_selected == (row, col):  # same piece twice
                         sq_selected = ()  # deselect
                         mouse_clicks = []
+
                     else:
-                        sq_selected = (row, col)
-                        mouse_clicks.append(sq_selected)
+                        if sq_selected:
+                            if gamestate.board[sq_selected[0]][sq_selected[1]][0] == gamestate.board[row][col][0]:  #clicked same color piece
+                                sq_selected = (row, col)
+                                mouse_clicks = [sq_selected]
+                            else:
+                                sq_selected = (row, col)
+                                mouse_clicks.append(sq_selected)
+                        else:
+                            sq_selected = (row, col)
+                            mouse_clicks.append(sq_selected)
                     if len(mouse_clicks) == 2:  # successful move
                         move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
                         print(move.get_notation())
-                        if move in legal_moves:
-                            gamestate.make_move(move)
-                            move_made = True
-                            sq_selected = ()  # reset clicks
-                            mouse_clicks = []
-                        else:  # invalid move or player clicked another piece
+                        for i in range(len(legal_moves)):
+                            if move == legal_moves[i]:
+                                move = legal_moves[i]
+                                gamestate.make_move(move)
+                                move_made = True
+                                sq_selected = ()  # reset clicks
+                                mouse_clicks = []
+                        if not move_made:
                             mouse_clicks = [sq_selected]
 
         if move_made:

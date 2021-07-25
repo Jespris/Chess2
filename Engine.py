@@ -38,6 +38,7 @@ class GameState:
         self.in_check = False
         self.pins = []
         self.checks = []
+        self.en_passant_possible = ()  # the square where en passant is possible
         self.checkmate = False
         self.stalemate = False
 
@@ -56,6 +57,21 @@ class GameState:
         elif move.piece_moved == 'bk':
             self.black_king = (move.end_row, move.end_col)
 
+        # pawn promotion
+        if move.is_pawn_promotion:
+            promote_to_piece = input("Promote to q, r, b or n:")
+            self.board[move.end_row][move.end_col] = move.piece_moved[0] + promote_to_piece
+
+        # update en passant possible variable
+        if move.piece_moved[1] == 'p' and abs(move.start_row - move.end_row) == 2:  # only on two square pawn advances
+            self.en_passant_possible = ((move.start_row + move.end_row) // 2, move.end_col)
+        else:
+            self.en_passant_possible = ()
+        # en passant
+        if move.is_en_passant:
+            self.board[move.start_row][move.end_col] = '--'
+
+
     def undo_move(self):
         if self.move_log:
             move = self.move_log.pop()
@@ -67,6 +83,14 @@ class GameState:
                 self.white_king = (move.start_row, move.start_col)
             elif move.piece_moved == 'bk':
                 self.black_king = (move.start_row, move.start_col)
+            # undo en passant
+            if move.is_en_passant:
+                self.board[move.end_row][move.end_col] = '--'  # landing square blank
+                self.board[move.start_row][move.end_col] = move.piece_captured
+                self.en_passant_possible = (move.end_row, move.end_col)
+            # undo a 2 square pawn advance
+            if move.piece_moved[1] == 'p' and abs(move.start_row - move.end_row) == 2:
+                self.en_passant_possible = ()
 
     """
     Listing legal moves
@@ -175,11 +199,9 @@ class GameState:
                                 (piece_type == 'q') or (i == 1 and piece_type == 'k'):
                             if possible_pin == ():  # no piece blocking, so check
                                 in_check = True
-                                print("Checking piece found!")
                                 checks.append((new_row, new_col, card_dir[d][0], card_dir[d][1]))
                                 break
                             else:  # piece blocking so pin
-                                print("Pin found!")
                                 pins.append(possible_pin)
                                 break
                         else:  # enemy piece not applying check
@@ -196,7 +218,6 @@ class GameState:
                 if end_piece[0] == enemy and end_piece[1] == 'n':  # enemy knight attacking king
                     in_check = True
                     checks.append((new_row, new_col, n[0], n[1]))
-                    print("Knight check found!")
         return in_check, pins, checks
 
     """
@@ -207,11 +228,9 @@ class GameState:
         # pins and stuff
         piece_pinned = False
         pin_direction = ()
-        print("Pins:", self.pins)
         for i in range(len(self.pins) - 1, -1, -1):
             if self.pins[i][0] == r and self.pins[i][1] == c:
                 piece_pinned = True
-                print("Pawn is pinned:", r, c)
                 pin_direction = (self.pins[i][2], self.pins[i][3])
                 self.pins.remove(self.pins[i])
                 break
@@ -231,6 +250,8 @@ class GameState:
                 if self.board[r + d[0]][new_c][0] == enemy:
                     if not piece_pinned or pin_direction == (d[0], d[1]):
                         moves.append(Move((r, c), (r + d[0], new_c), self.board))
+                elif (r + d[0], new_c) == self.en_passant_possible:
+                    moves.append(Move((r, c), (r + d[0], new_c), self.board, en_passant_possible=True))
         return moves
 
     def get_rook_moves(self, r, c, moves):
@@ -376,13 +397,21 @@ class Move:
     files_to_cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
     cols_to_files = {v: k for k, v in files_to_cols.items()}
 
-    def __init__(self, start_sq, end_sq, board):
+    def __init__(self, start_sq, end_sq, board, en_passant_possible=False):
         self.start_row = start_sq[0]
         self.start_col = start_sq[1]
         self.end_row = end_sq[0]
         self.end_col = end_sq[1]
         self.piece_moved = board[self.start_row][self.start_col]
         self.piece_captured = board[self.end_row][self.end_col]
+
+        self.is_pawn_promotion = ((self.piece_moved == 'wp' and self.end_row == 0) or (self.piece_moved == 'bp' and self.end_row == 7))
+
+        self.is_en_passant = en_passant_possible
+        if self.is_en_passant:
+            self.piece_captured = 'wp' if self.piece_moved == 'bp' else 'bp'
+
+
         self.move_ID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
 
     """
