@@ -19,12 +19,12 @@ class GameState:
         self.squaresize = sq_size
         self.board = [
             ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
-            ['bp', 'bp', 'bp', 'bp', '--', 'bp', 'bp', 'bp'],
+            ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['wp', 'wp', 'wp', 'wp', '--', 'wp', 'wp', 'wp'],
+            ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
             ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr'],
         ]
         self.legal_moves = []
@@ -44,62 +44,74 @@ class GameState:
         self.move_log.append(move)
         self.white_to_move = not self.white_to_move
 
+    def undo_move(self):
+        if self.move_log:
+            move = self.move_log.pop()
+            self.board[move.start_row][move.start_col] = move.piece_moved
+            self.board[move.end_row][move.end_col] = move.piece_captured
+            self.white_to_move = not self.white_to_move
 
+    """
+    Listing legal moves
+    """
 
-    def get_legal_moves(self, from_square):
-        piece_type = self.board[from_square[1]][from_square[0]][1]
-        if piece_type == 'p':
-            self.get_pawn_moves(from_square)
-        elif piece_type == 'r':
-            self.get_rook_moves(from_square)
-        elif piece_type == 'n':
-            self.get_knight_moves(from_square)
-        elif piece_type == 'b':
-            self.get_bishop_moves(from_square)
-        elif piece_type == 'q':
-            self.get_queen_moves(from_square)
-        elif piece_type == 'k':
-            self.get_king_moves(from_square)
+    def get_legal_moves(self):  # considering checks (pins)
+        return self.get_all_possible_moves()  # TEMPORARY
 
-    def get_king_moves(self, square):
-        legal = []
-        directions = [[1, 0], [1, 1], [1, -1], [0, 1], [0, -1], [-1, 1], [-1, 0], [-1, -1]]
-        for d in directions:
-            new_row = square[1] + d[0]
-            new_col = square[0] + d[1]
-            if 0 <= new_col < 8 and 0 <= new_row < 8:
-                enemy = 'b' if self.white_to_move else 'w'
-                if self.board[new_row][new_col] == '--' or self.board[new_row][new_col][0] == enemy:
-                    legal.append([new_col, new_row])
+    def get_all_possible_moves(self):  # without considering checks
+        moves = []
+        for r in range(8):
+            for c in range(8):
+                turn = self.board[r][c][0]
+                if (turn == 'w' and self.white_to_move) or (turn == 'b' and not self.white_to_move):
+                    piece = self.board[r][c][1]
+                    if piece == 'p':
+                        self.get_pawn_moves(r, c, moves)
+                    elif piece == 'r':
+                        self.get_rook_moves(r, c, moves)
+                    elif piece == 'n':
+                        self.get_knight_moves(r, c, moves)
+                    elif piece == 'b':
+                        self.get_bishop_moves(r, c, moves)
+                    elif piece == 'q':
+                        self.get_queen_moves(r, c, moves)
+                    elif piece == 'k':
+                        self.get_king_moves(r, c, moves)
+        return moves
 
-    def get_pawn_moves(self, square):
-        legal = []
-        pawn_direction = -1 if self.white_to_move else 1
-        original_row = 6 if self.white_to_move else 1
+    """
+    Different piece moves
+    """
+
+    def get_pawn_moves(self, r, c, moves):
+        direction = -1 if self.white_to_move else 1  # sets pawn direction
+        origin_row = 1 if not self.white_to_move else 6
         enemy = 'b' if self.white_to_move else 'w'
-        new_row = square[1] + pawn_direction
-        if 0 <= new_row < 8:
-            if self.board[new_row][square[0]] == '--':
-                legal.append([square[0], new_row])
-            if square[1] == original_row:
-                legal.append([square[0], square[1] + 2 * pawn_direction])
-            sides = [-1, 1]
-            for side in sides:
-                new_col = square[0] + side
-                if 0 <= new_col < 8:
-                    if self.board[new_row][new_col][0] == enemy:
-                        legal.append([new_col, new_row])
+        if self.board[r + direction][c] == '--':  # 1 square pawn advance, add promotion later
+            moves.append(Move((r, c), (r + direction, c), self.board))
+            if r == origin_row and self.board[r + 2 * direction][c] == '--':  # 2 square advance
+                moves.append(Move((r, c), (r + 2 * direction, c), self.board))
+        capture_directions = [[direction, 1], [direction, -1]]
+        for d in capture_directions:
+            new_c = c + d[1]
+            if 0 <= new_c < 8:  # inside board
+                if self.board[r + d[0]][new_c][0] == enemy:
+                    moves.append(Move((r, c), (r + d[0], new_c), self.board))
+        return moves
 
-    def get_rook_moves(self, square):
+    def get_rook_moves(self, r, c, moves):
         pass
 
-    def get_bishop_moves(self, square):
+    def get_bishop_moves(self, r, c, moves):
         pass
 
-    def get_knight_moves(self, square):
+    def get_knight_moves(self, r, c, moves):
         pass
 
-    def get_queen_moves(self, square):
+    def get_queen_moves(self, r, c, moves):
+        pass
+
+    def get_king_moves(self, r, c, moves):
         pass
 
 
@@ -118,6 +130,18 @@ class Move:
         self.end_col = end_sq[1]
         self.piece_moved = board[self.start_row][self.start_col]
         self.piece_captured = board[self.end_row][self.end_col]
+        self.move_ID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
+
+    """
+    Overriding the equals method, to allow python to recognize the tuples as equal and not two different objects
+    """
+
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            return self.move_ID == other.move_ID
+        return False
+
+    # TODO: better notation
 
     def get_notation(self):
         piece = '' if self.piece_moved[1] == 'p' else self.piece_moved[1].upper()

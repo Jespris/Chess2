@@ -18,6 +18,8 @@ def main():
     clock = p.time.Clock()
     sq_selected = ()
     mouse_clicks = []
+    legal_moves = gamestate.get_legal_moves()
+    move_made = False
     Display.load_images()
     flag = True
     while flag:
@@ -25,6 +27,9 @@ def main():
             if e.type == p.KEYDOWN:
                 if e.key == p.K_ESCAPE:
                     flag = False
+                if e.key == p.K_z:
+                    gamestate.undo_move()
+                    move_made = True  # will call get_legal moves later
             if e.type == p.MOUSEBUTTONDOWN:
                 mouse_pos = p.mouse.get_pos()
                 col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE
@@ -38,10 +43,13 @@ def main():
                 if len(mouse_clicks) == 2:  # successful move
                     move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
                     print(move.get_notation())
-                    gamestate.make_move(move)
+                    if move in legal_moves:
+                        gamestate.make_move(move)
+                        move_made = True
                     sq_selected = ()  # reset clicks
                     mouse_clicks = []
-
+        if move_made:
+            legal_moves = gamestate.get_legal_moves()
         Display.display_board(screen, gamestate)
         clock.tick(FPS)
         p.display.flip()
