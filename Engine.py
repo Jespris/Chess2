@@ -100,10 +100,68 @@ class GameState:
         return moves
 
     def get_rook_moves(self, r, c, moves):
-        pass
+        enemy = 'b' if self.white_to_move else 'w'
+        i = 1
+        north_stop = False
+        south_stop = False
+        west_stop = False
+        east_stop = False
+        while (not north_stop or not south_stop or not west_stop or not east_stop) and i < 8:
+            # check "north" direction
+            if not north_stop and r - i >= 0:
+                if self.board[r - i][c] == '--':
+                    moves.append(Move((r, c), (r - i, c), self.board))
+                elif self.board[r - i][c][0] == enemy:
+                    moves.append(Move((r, c), (r - i, c), self.board))
+                    north_stop = True
+                else:
+                    north_stop = True
+
+            if not south_stop and r + i < 8:
+                if self.board[r + i][c] == '--':
+                    moves.append(Move((r, c), (r + i, c), self.board))
+                elif self.board[r + i][c][0] == enemy:
+                    moves.append(Move((r, c), (r + i, c), self.board))
+                    south_stop = True
+                else:
+                    south_stop = True
+
+            if not west_stop and c - i >= 0:
+                if self.board[r][c - i] == '--':
+                    moves.append(Move((r, c), (r, c - i), self.board))
+                elif self.board[r][c - i][0] == enemy:
+                    moves.append(Move((r, c), (r, c - i), self.board))
+                    west_stop = True
+                else:
+                    west_stop = True
+
+            if not east_stop and c + i < 8:
+                if self.board[r][c + i] == '--':
+                    moves.append(Move((r, c), (r, c + i), self.board))
+                elif self.board[r - i][c][0] == enemy:
+                    moves.append(Move((r, c), (r, c + i), self.board))
+                    east_stop = True
+                else:
+                    east_stop = True
+            i += 1
+        return moves
 
     def get_bishop_moves(self, r, c, moves):
-        pass
+        enemy = 'b' if self.white_to_move else 'w'
+        directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]]
+        for d in directions:
+            for i in range(1, 8):
+                new_r = r + d[0] * i
+                new_c = c + d[1] * i
+                if 0 <= new_r < 8 and 0 <= new_c < 8:  # new square is inside board
+                    if self.board[new_r][new_c] == '--':
+                        moves.append(Move((r, c), (new_r, new_c), self.board))
+                    elif self.board[new_r][new_c][0] == enemy:
+                        moves.append(Move((r, c), (new_r, new_c), self.board))
+                        break
+                    else:
+                        break
+        return moves
 
     def get_knight_moves(self, r, c, moves):
         pass
