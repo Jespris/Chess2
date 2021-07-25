@@ -34,20 +34,21 @@ def main():
                 mouse_pos = p.mouse.get_pos()
                 col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE
                 row = (mouse_pos[1] - BOARDGAP) // SQ_SIZE
-                if sq_selected == (row, col):  # same piece twice
-                    sq_selected = ()  # deselect
-                    mouse_clicks = []
-                else:
-                    sq_selected = (row, col)
-                    mouse_clicks.append(sq_selected)
-                if len(mouse_clicks) == 2:  # successful move
-                    move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
-                    print(move.get_notation())
-                    if move in legal_moves:
-                        gamestate.make_move(move)
-                        move_made = True
-                    sq_selected = ()  # reset clicks
-                    mouse_clicks = []
+                if 0 <= row < 8 and 0 <= col < 8:  # inside board
+                    if sq_selected == (row, col):  # same piece twice
+                        sq_selected = ()  # deselect
+                        mouse_clicks = []
+                    else:
+                        sq_selected = (row, col)
+                        mouse_clicks.append(sq_selected)
+                    if len(mouse_clicks) == 2:  # successful move
+                        move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
+                        print(move.get_notation())
+                        if move in legal_moves:
+                            gamestate.make_move(move)
+                            move_made = True
+                        sq_selected = ()  # reset clicks
+                        mouse_clicks = []
         if move_made:
             legal_moves = gamestate.get_legal_moves()
         Display.display_board(screen, gamestate)

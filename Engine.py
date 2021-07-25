@@ -164,13 +164,47 @@ class GameState:
         return moves
 
     def get_knight_moves(self, r, c, moves):
-        pass
+        enemy = 'b' if self.white_to_move else 'w'
+        directions = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [-1, 2], [1, -2], [-1, -2]]
+        for d in directions:
+            new_r = r + d[0]
+            new_c = c + d[1]
+            if 0 <= new_r < 8 and 0 <= new_c < 8:  # new square is inside board
+                if self.board[new_r][new_c] == '--':
+                    moves.append(Move((r, c), (new_r, new_c), self.board))
+                elif self.board[new_r][new_c][0] == enemy:
+                    moves.append(Move((r, c), (new_r, new_c), self.board))
+        return moves
 
     def get_queen_moves(self, r, c, moves):
-        pass
+        enemy = 'b' if self.white_to_move else 'w'
+        directions = [[1, 1], [1, -1], [-1, 1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]]
+        for d in directions:
+            for i in range(1, 8):
+                new_r = r + d[0] * i
+                new_c = c + d[1] * i
+                if 0 <= new_r < 8 and 0 <= new_c < 8:  # new square is inside board
+                    if self.board[new_r][new_c] == '--':
+                        moves.append(Move((r, c), (new_r, new_c), self.board))
+                    elif self.board[new_r][new_c][0] == enemy:
+                        moves.append(Move((r, c), (new_r, new_c), self.board))
+                        break
+                    else:
+                        break
+        return moves
 
     def get_king_moves(self, r, c, moves):
-        pass
+        enemy = 'b' if self.white_to_move else 'w'
+        directions = [[1, 1], [1, -1], [-1, 1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]]
+        for d in directions:
+            new_r = r + d[0]
+            new_c = c + d[1]
+            if 0 <= new_r < 8 and 0 <= new_c < 8:  # new square is inside board
+                if self.board[new_r][new_c] == '--':
+                    moves.append(Move((r, c), (new_r, new_c), self.board))
+                elif self.board[new_r][new_c][0] == enemy:
+                    moves.append(Move((r, c), (new_r, new_c), self.board))
+        return moves
 
 
 class Move:
