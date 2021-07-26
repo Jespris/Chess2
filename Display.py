@@ -35,6 +35,7 @@ def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, m
     display_pieces(screen, gamestate, square_selected, mouse_down)
     display_coordinates(screen)
     display_move_log(screen, gamestate)
+    display_reset_button(screen)
 
 
 def display_squares(screen):
@@ -146,4 +147,36 @@ def display_last_move(screen, gamestate):
         p.draw.rect(screen, highlight_color, p.Rect(BOARDGAP + move.start_col * SQ_SIZE, BOARDGAP + move.start_row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
         p.draw.rect(screen, highlight_color, p.Rect(BOARDGAP + move.end_col * SQ_SIZE, BOARDGAP + move.end_row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
+
+def display_game_over(screen, gamestate, message):
+    box_pos = [BOARDGAP + 2 * SQ_SIZE, BOARDGAP + 3 * SQ_SIZE + SQ_SIZE // 2]
+    box_size = [4 * SQ_SIZE, 2 * SQ_SIZE]
+    gap = 2
+    p.draw.rect(screen, p.Color("black"), p.Rect(box_pos[0], box_pos[1], box_size[0], box_size[1]))
+    p.draw.rect(screen, p.Color("white"),
+                p.Rect(box_pos[0] + gap, box_pos[1] + gap, box_size[0] - 2 * gap, box_size[1] - 2 * gap))
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+    text = font.render(message, False, p.Color("black"))
+    textRect = text.get_rect()
+    textRect.center = (box_pos[0] + box_size[0] // 2, box_pos[1] + box_size[1] // 2)
+    screen.blit(text, textRect)
+
+# reset button
+
+def get_reset_button():
+    box_pos = [BOARDGAP + 10 * SQ_SIZE + SQ_SIZE // 2, BOARDGAP + 8 * SQ_SIZE]
+    box_size = [SQ_SIZE, SQ_SIZE // 2]
+    return box_pos, box_size
+
+
+def display_reset_button(screen):
+    box_pos, box_size = get_reset_button()
+    gap = 2
+    p.draw.rect(screen, p.Color("black"), p.Rect(box_pos[0], box_pos[1], box_size[0], box_size[1]))
+    p.draw.rect(screen, p.Color("white"), p.Rect(box_pos[0] + gap, box_pos[1] + gap, box_size[0] - 2*gap, box_size[1] - 2*gap))
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+    text = font.render("Reset", False, p.Color("black"))
+    textRect = text.get_rect()
+    textRect.center = (box_pos[0] + box_size[0] // 2, box_pos[1] + box_size[1] // 2)
+    screen.blit(text, textRect)
 

@@ -40,7 +40,7 @@ class GameState:
         self.checks = []
         self.en_passant_possible = ()  # the square where en passant is possible
         self.checkmate = False
-        self.stalemate = False
+        self.draw = False
         self.promote_to = 'q'
 
     """
@@ -211,10 +211,10 @@ class GameState:
             if self.in_check:
                 self.checkmate = True
             else:
-                self.stalemate = True
+                self.draw = True
         else:
             self.checkmate = False
-            self.stalemate = False
+            self.draw = False
         return moves
 
     def get_all_possible_moves(self):  # without considering checks
