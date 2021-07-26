@@ -26,12 +26,15 @@ def load_images():
 
 
 def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, mouse_pos):
+    p.draw.rect(screen, p.Color("gray"), p.Rect(0, 0, WIDTH, HEIGHT))
     display_squares(screen)
+    display_last_move(screen, gamestate)
     display_square_selected(screen, square_selected)
     display_legal_squares(screen, gamestate, square_selected, legal_moves)
     display_drag_move(screen, gamestate, square_selected, mouse_down, mouse_pos)
     display_pieces(screen, gamestate, square_selected, mouse_down)
     display_coordinates(screen)
+    display_move_log(screen, gamestate)
 
 
 def display_squares(screen):
@@ -97,3 +100,50 @@ def display_coordinates(screen):
         file_text_rect.center = (BOARDGAP + i * SQ_SIZE + indent, BOARDGAP + 8 * SQ_SIZE + gap)
         screen.blit(rank_text, rank_text_rect)
         screen.blit(file_text, file_text_rect)
+
+
+def display_move_log(screen, gamestate):
+    box_pos = [BOARDGAP + 9 * SQ_SIZE, BOARDGAP]  # upper left corner
+    box_width = 4 * SQ_SIZE
+    box_height = 8 * SQ_SIZE
+    p.draw.rect(screen, p.Color("white"), p.Rect(box_pos[0], box_pos[1], box_width, box_height))
+    black = p.Color("black")
+    if len(gamestate.move_log) >= 2:
+        move_nr = len(gamestate.move_log) // 2
+        font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+        row_height = SQ_SIZE // 3
+        possible_amount_of_moves_displayed = box_height // row_height
+        if move_nr >= possible_amount_of_moves_displayed:  # cut the moves
+            for i in range(1 + (move_nr - possible_amount_of_moves_displayed), move_nr + 1):
+                text = font.render(str(i), True, black)
+                textRect = text.get_rect()
+                textRect.center = (box_pos[0] + SQ_SIZE // 6, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
+                screen.blit(text, textRect)
+        else:  # display from beginning
+            for i in range(1, move_nr + 1):
+                text = font.render(str(i), True, black)
+                textRect = text.get_rect()
+                textRect.center = (box_pos[0] + SQ_SIZE // 6, box_pos[1] + i * row_height)
+                screen.blit(text, textRect)
+
+                # moves
+                white_move = gamestate.notation_log[i * 2 - 2]
+                black_move = gamestate.notation_log[i * 2 - 1]
+                white_text = font.render(white_move, False, black)
+                black_text = font.render(black_move, False, black)
+                white_text_Rect = white_text.get_rect()
+                white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + i * row_height)
+                screen.blit(white_text, white_text_Rect)
+                black_text_Rect = black_text.get_rect()
+                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + 2 * SQ_SIZE, box_pos[1] + i * row_height)
+                screen.blit(black_text, black_text_Rect)
+
+
+def display_last_move(screen, gamestate):
+    highlight_color = p.Color("lightblue")
+    if gamestate.move_log:
+        move = gamestate.move_log[-1]
+        p.draw.rect(screen, highlight_color, p.Rect(BOARDGAP + move.start_col * SQ_SIZE, BOARDGAP + move.start_row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        p.draw.rect(screen, highlight_color, p.Rect(BOARDGAP + move.end_col * SQ_SIZE, BOARDGAP + move.end_row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+
