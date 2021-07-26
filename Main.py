@@ -118,7 +118,9 @@ def main():
 
         # AI moves
         if not game_over and not is_human_turn:
-            AI_move = SmartMoveFinder.find_random_move(legal_moves)
+            AI_move = SmartMoveFinder.find_best_move(gamestate, legal_moves)
+            if AI_move is None:
+                AI_move = SmartMoveFinder.find_random_move(legal_moves)
             gamestate.make_move(AI_move)
             move_made = True
 
@@ -128,7 +130,6 @@ def main():
         Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos())
 
         # Checkmate and draw
-        gamestate.get_draw()
         if gamestate.checkmate:
             game_over = True
             if gamestate.white_to_move:

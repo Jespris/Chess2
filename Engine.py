@@ -106,6 +106,9 @@ class GameState:
             temp = self.notation_log.pop()
             self.notation_log.append(temp + '#')
 
+        # check for draws
+        self.get_draw()
+
     def update_castle_rights(self, move):
         if move.piece_moved == 'wk':
             self.castle_rights.wqs = False
