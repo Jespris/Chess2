@@ -9,7 +9,6 @@ SQ_SIZE = (HEIGHT - 2 * BOARDGAP) // 8
 FPS = 30
 
 
-
 def main():
     p.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
@@ -30,6 +29,14 @@ def main():
                 if e.key == p.K_z:
                     gamestate.undo_move()
                     move_made = True  # will call get_legal moves later
+                if e.key == p.K_n:
+                    gamestate.promote_to = 'n'
+                if e.key == p.K_b:
+                    gamestate.promote_to = 'b'
+                if e.key == p.K_r:
+                    gamestate.promote_to = 'r'
+            if e.type == p.KEYUP:
+                gamestate.promote_to = 'q'
             if e.type == p.MOUSEBUTTONDOWN:
                 mouse_pos = p.mouse.get_pos()
                 col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE

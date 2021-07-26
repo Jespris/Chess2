@@ -11,7 +11,6 @@ BOARDGAP = HEIGHT // 10
 SQ_SIZE = (HEIGHT - 2 * BOARDGAP) // 8
 
 
-
 class GameState:
     def __init__(self, width, height, sq_size):
         self.width = width
@@ -41,6 +40,7 @@ class GameState:
         self.en_passant_possible = ()  # the square where en passant is possible
         self.checkmate = False
         self.stalemate = False
+        self.promote_to = 'q'
 
     """
     MOVE
@@ -59,8 +59,7 @@ class GameState:
 
         # pawn promotion
         if move.is_pawn_promotion:
-            promote_to_piece = input("Promote to q, r, b or n:")
-            self.board[move.end_row][move.end_col] = move.piece_moved[0] + promote_to_piece
+            self.board[move.end_row][move.end_col] = move.piece_moved[0] + self.promote_to
 
         # update en passant possible variable
         if move.piece_moved[1] == 'p' and abs(move.start_row - move.end_row) == 2:  # only on two square pawn advances
@@ -70,7 +69,6 @@ class GameState:
         # en passant
         if move.is_en_passant:
             self.board[move.start_row][move.end_col] = '--'
-
 
     def undo_move(self):
         if self.move_log:
