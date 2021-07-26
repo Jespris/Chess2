@@ -120,6 +120,18 @@ def display_move_log(screen, gamestate):
                 textRect = text.get_rect()
                 textRect.center = (box_pos[0] + SQ_SIZE // 6, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
                 screen.blit(text, textRect)
+
+                # moves
+                white_move = gamestate.notation_log[i * 2 - 2]
+                black_move = gamestate.notation_log[i * 2 - 1]
+                white_text = font.render(white_move, False, black)
+                black_text = font.render(black_move, False, black)
+                white_text_Rect = white_text.get_rect()
+                white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
+                screen.blit(white_text, white_text_Rect)
+                black_text_Rect = black_text.get_rect()
+                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + 2 * SQ_SIZE, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
+                screen.blit(black_text, black_text_Rect)
         else:  # display from beginning
             for i in range(1, move_nr + 1):
                 text = font.render(str(i), True, black)
