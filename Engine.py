@@ -63,7 +63,7 @@ class GameState:
         if move.is_pawn_promotion:
             self.board[move.end_row][move.end_col] = move.piece_moved[0] + self.promote_to
             self.notation_log.pop()
-            self.notation_log.append(move.get_notation() + '=' + self.promote_to)
+            self.notation_log.append(move.get_notation() + '=' + self.promote_to.upper())
 
         # update en passant possible variable
         if move.piece_moved[1] == 'p' and abs(move.start_row - move.end_row) == 2:  # only on two square pawn advances
@@ -174,6 +174,9 @@ class GameState:
             # undo castle_rights
             self.castle_rights_log.pop()
             self.castle_rights = self.castle_rights_log[-1]
+
+        self.checkmate = False
+        self.draw = False
 
     """
     Listing legal moves
