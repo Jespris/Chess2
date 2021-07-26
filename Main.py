@@ -1,6 +1,6 @@
 import pygame as p
 from win32api import GetSystemMetrics
-from Chess import Engine, Display
+from Chess import Engine, Display, SmartMoveFinder
 
 WIDTH = GetSystemMetrics(0)
 HEIGHT = GetSystemMetrics(1)
@@ -23,8 +23,11 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
+    white_human = False
+    black_human = False
     flag = True
     while flag:
+        is_human_turn = (gamestate.white_to_move and white_human) or (not gamestate.white_to_move and black_human)
         for e in p.event.get():
             if e.type == p.KEYDOWN:
                 if e.key == p.K_ESCAPE:
@@ -41,9 +44,9 @@ def main():
             if e.type == p.KEYUP:
                 gamestate.promote_to = 'q'
             if e.type == p.MOUSEBUTTONDOWN:
-                if not game_over:
-                    mouse_down = True
-                    mouse_pos = p.mouse.get_pos()
+                mouse_down = True
+                mouse_pos = p.mouse.get_pos()
+                if not game_over and is_human_turn:
                     col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE
                     row = (mouse_pos[1] - BOARDGAP) // SQ_SIZE
                     if 0 <= row < 8 and 0 <= col < 8:  # inside board
@@ -73,12 +76,13 @@ def main():
                                     mouse_clicks = []
                             if not move_made:
                                 mouse_clicks = [sq_selected]
-                    reset_pos, reset_size = Display.get_reset_button()
-                    if reset_pos[0] < mouse_pos[0] < reset_pos[0] + reset_size[0] and reset_pos[1] < mouse_pos[1] < reset_pos[1] + reset_size[1]:
-                        gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
-                        legal_moves = gamestate.get_legal_moves()
-                        sq_selected = ()
-                        mouse_clicks = []
+                reset_pos, reset_size = Display.get_reset_button()
+                if reset_pos[0] < mouse_pos[0] < reset_pos[0] + reset_size[0] and reset_pos[1] < mouse_pos[1] < reset_pos[1] + reset_size[1]:
+                    gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
+                    legal_moves = gamestate.get_legal_moves()
+                    sq_selected = ()
+                    mouse_clicks = []
+                    game_over = False
             if e.type == p.MOUSEBUTTONUP:
                 mouse_down = False
                 mouse_pos = p.mouse.get_pos()
@@ -111,11 +115,20 @@ def main():
                                 mouse_clicks = []
                         if not move_made:
                             mouse_clicks = [sq_selected]
+
+        # AI moves
+        if not game_over and not is_human_turn:
+            AI_move = SmartMoveFinder.find_random_move(legal_moves)
+            gamestate.make_move(AI_move)
+            move_made = True
+
         if move_made:
             legal_moves = gamestate.get_legal_moves()
 
         Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos())
 
+        # Checkmate and draw
+        gamestate.get_draw()
         if gamestate.checkmate:
             game_over = True
             if gamestate.white_to_move:

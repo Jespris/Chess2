@@ -537,6 +537,28 @@ class GameState:
             if not self.get_square_under_attack(r, c - 1, ally) and not self.get_square_under_attack(r, c - 2, ally):
                 moves.append(Move((r, c), (r, c - 2), self.board, is_castle_move=True))
 
+    # draw logic
+    def get_draw(self):
+        # TODO: make get draw function more accurate
+        white_pieces = 0
+        black_pieces = 0
+        for row in range(8):
+            for col in range(8):
+                # check if only kings are on board
+                if self.board[row][col][0] == 'w':
+                    white_pieces += 1
+                if self.board[row][col][0] == 'b':
+                    black_pieces += 1
+        if white_pieces == 1 and black_pieces == 1:
+            self.draw = True
+        # 50 move rule, go backwards in movelog, if no captures in 50 moves or pawn pushes => draw
+        if len(self.move_log) > 50:
+            for i in range(-1, -50, -1):
+                move = self.move_log[i]
+                if move.piece_captured != '--' or move.piece_moved[1] == 'p':
+                    return
+            self.draw = True
+
 
 class CastleRights:  # for storing the info about castling rights
     def __init__(self, wks, bks, wqs, bqs):
