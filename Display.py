@@ -31,6 +31,7 @@ def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, m
     display_legal_squares(screen, gamestate, square_selected, legal_moves)
     display_drag_move(screen, gamestate, square_selected, mouse_down, mouse_pos)
     display_pieces(screen, gamestate, square_selected, mouse_down)
+    display_coordinates(screen)
 
 
 def display_squares(screen):
@@ -73,3 +74,26 @@ def display_drag_move(screen, gamestate, square_selected, mouse_down, mouse_pos)
         if piece != '--':
             screen.blit(IMAGES[piece], (mouse_pos[0] - SQ_SIZE // 2, mouse_pos[1] - SQ_SIZE // 2))
 
+
+def display_coordinates(screen):
+    ranks_to_rows = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
+    rows_to_ranks = {v: k for k, v in ranks_to_rows.items()}
+
+    files_to_cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
+    cols_to_files = {v: k for k, v in files_to_cols.items()}
+
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+    black = p.Color("black")
+    indent = SQ_SIZE // 2
+    gap = SQ_SIZE // 8
+    for i in range(8):
+        rank = rows_to_ranks[i]
+        file = cols_to_files[i]
+        rank_text = font.render(rank, False, black)
+        file_text = font.render(file, False, black)
+        rank_text_rect = rank_text.get_rect()
+        rank_text_rect.center = (BOARDGAP + 8 * SQ_SIZE + gap, BOARDGAP + i * SQ_SIZE + indent)
+        file_text_rect = file_text.get_rect()
+        file_text_rect.center = (BOARDGAP + i * SQ_SIZE + indent, BOARDGAP + 8 * SQ_SIZE + gap)
+        screen.blit(rank_text, rank_text_rect)
+        screen.blit(file_text, file_text_rect)

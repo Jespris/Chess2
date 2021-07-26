@@ -12,6 +12,7 @@ FPS = 30
 def main():
     p.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
+    p.display.set_caption('Chess2')
     screen.fill(p.Color("Gray"))
     gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
     clock = p.time.Clock()
