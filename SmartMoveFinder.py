@@ -8,7 +8,7 @@ import random as r
 piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 4
+DEPTH = 3
 # black wants a negative score, white positive
 
 

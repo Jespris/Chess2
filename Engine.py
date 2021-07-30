@@ -379,6 +379,7 @@ class GameState:
         direction = -1 if self.white_to_move else 1  # sets pawn direction
         origin_row = 1 if not self.white_to_move else 6
         enemy = 'b' if self.white_to_move else 'w'
+        ally = 'w' if self.white_to_move else 'b'
         if self.board[r + direction][c] == '--':  # 1 square pawn advance, add promotion later
             if not piece_pinned or pin_direction == (direction, 0):
                 moves.append(Move((r, c), (r + direction, c), self.board))
@@ -392,7 +393,28 @@ class GameState:
                     if not piece_pinned or pin_direction == (d[0], d[1]):
                         moves.append(Move((r, c), (r + d[0], new_c), self.board))
                 elif (r + d[0], new_c) == self.en_passant_possible:
-                    moves.append(Move((r, c), (r + d[0], new_c), self.board, en_passant_possible=True))
+                    # check if the same king is on same rank as pawn initially
+                    king_row, king_col = self.white_king if self.white_to_move else self.black_king
+                    attacking_piece = blocking_piece = False
+                    if king_row == r:
+                        if king_col < c:  # king is left of pawn
+                            inside_range = range(king_col + 1, c - 1) if capture_directions.index(d) == 1 else range(king_col + 1, c)
+                            outside_range = range(c + 1, 8) if capture_directions.index(d) == 1 else range(c + 2, 8)
+                        else:  # king right of pawn
+                            inside_range = range(king_col - 1, c, - 1) if capture_directions.index(d) == 1 else range(king_col - 1, c + 1, -1)
+                            outside_range = range(c - 2, -1, -1) if capture_directions.index(d) == 1 else range(c - 1, -1, -1)
+                        for i in inside_range:
+                            if self.board[r][i] != '--':  # some other piece blocks
+                                blocking_piece = True
+                        for j in outside_range:
+                            square = self.board[r][j]
+                            if square[0] == enemy and (square[1] == 'r' or square[1] == 'q'):  # attacking piece
+                                attacking_piece = True
+                            elif square != '--':  # not empty but not enemy rook or queen
+                                blocking_piece = True
+                    if not attacking_piece or blocking_piece:
+                        moves.append(Move((r, c), (r + d[0], new_c), self.board, en_passant_possible=True))
+
 
     def get_rook_moves(self, r, c, moves):
         # pins and stuff

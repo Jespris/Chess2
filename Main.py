@@ -23,8 +23,8 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
-    black_human = False
+    white_human = True
+    black_human = True
     flag = True
     while flag:
         is_human_turn = (gamestate.white_to_move and white_human) or (not gamestate.white_to_move and black_human)
