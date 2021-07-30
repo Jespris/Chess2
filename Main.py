@@ -1,6 +1,7 @@
 import pygame as p
 from win32api import GetSystemMetrics
 from Chess import Engine, Display, SmartMoveFinder
+from multiprocessing import Process, Queue
 
 WIDTH = GetSystemMetrics(0)
 HEIGHT = GetSystemMetrics(1)
@@ -25,6 +26,8 @@ def main():
     game_over = False
     white_human = False
     black_human = False
+    AI_thinking = False
+    move_finder_process = None
     flag = True
     while flag:
         is_human_turn = (gamestate.white_to_move and white_human) or (not gamestate.white_to_move and black_human)
@@ -66,7 +69,6 @@ def main():
                                 mouse_clicks.append(sq_selected)
                         if len(mouse_clicks) == 2:  # successful move
                             move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
-                            print(move.get_notation())
                             for i in range(len(legal_moves)):
                                 if move == legal_moves[i]:
                                     move = legal_moves[i]
@@ -118,11 +120,22 @@ def main():
 
         # AI moves
         if not game_over and not is_human_turn:
-            AI_move = SmartMoveFinder.find_best_move(gamestate, legal_moves)
-            if AI_move is None:
-                AI_move = SmartMoveFinder.find_random_move(legal_moves)
-            gamestate.make_move(AI_move)
-            move_made = True
+            if not AI_thinking:
+                # threading to interact with board while ai is thinking
+                AI_thinking = True
+                print("thinking...")
+                return_queue = Queue()  # used to pass data between threads
+                move_finder_process = Process(target=SmartMoveFinder.find_best_move, args=(gamestate, legal_moves, return_queue))
+                move_finder_process.start()  # call find_best_move(gamestate, legal_moves, return_queue)
+
+            if not move_finder_process.is_alive():
+                print("done thinking")
+                AI_move = return_queue.get()
+                if AI_move is None:
+                    AI_move = SmartMoveFinder.find_random_move(legal_moves)
+                gamestate.make_move(AI_move)
+                move_made = True
+                AI_thinking = False
 
         if move_made:
             legal_moves = gamestate.get_legal_moves()

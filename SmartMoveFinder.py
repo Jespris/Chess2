@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 4
+DEPTH = 3
 
 knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
@@ -62,11 +62,11 @@ white_pawn_scores = [[5, 5, 5, 5, 5, 5, 5, 5],
                      [2, 2, 3, 4, 4, 3, 2, 2],
                      [2, 2, 3, 4, 4, 3, 2, 2],
                      [2, 2, 2, 3, 3, 2, 2, 2],
-                     [1, 1, 1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 0, 0, 1, 1, 1],
                      [1, 1, 1, 1, 1, 1, 1, 1]]
 
 black_pawn_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
-                     [1, 1, 1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 0, 0, 1, 1, 1],
                      [2, 2, 2, 3, 3, 2, 2, 2],
                      [2, 2, 3, 4, 4, 3, 2, 2],
                      [2, 2, 3, 4, 4, 3, 2, 2],
@@ -82,16 +82,18 @@ def find_random_move(legal_moves):
     return legal_moves[r.randint(0, len(legal_moves) - 1)]
 
 
-def find_best_move(gamestate, legal_moves):
-    global next_move
+def find_best_move(gamestate, legal_moves, return_queue):
+    global next_move, counter
     next_move = None
     r.shuffle(legal_moves)
+    counter = 0
     find_move_nega_max_alpha_beta(gamestate, legal_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1)
-    return next_move
+    print("Looked at", counter, "boardstates")
+    return_queue.put(next_move)
 
 
 def find_move_min_max(gamestate, legal_moves, depth, white_to_move):
-    global next_move
+    global next_move, counter
     if depth == 0:
         return score_material(gamestate.board)
     if white_to_move:  # maximize
@@ -121,7 +123,7 @@ def find_move_min_max(gamestate, legal_moves, depth, white_to_move):
 
 
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult):
-    global next_move
+    global next_move, counter
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
@@ -129,6 +131,7 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
 
     max_score = -CHECKMATE
     for move in legal_moves:
+        counter += 1
         gamestate.make_move(move)
         next_moves = gamestate.get_legal_moves()
         score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
@@ -136,6 +139,7 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
             max_score = score
             if depth == DEPTH:
                 next_move = move
+                print("looking at move", move.get_notation(), "evaluating as:", score)
         gamestate.undo_move()
         if max_score > alpha:  # pruning happens
             alpha = max_score
