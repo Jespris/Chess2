@@ -6,10 +6,22 @@ import random as r
 
 
 piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
+# black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
 DEPTH = 3
-# black wants a negative score, white positive
+
+knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 1, 1, 1, 1, 1, 1, 1]]  # TODO: tweak knight scores
+
+piece_position_scores = {'n': knight_scores}
+
 
 
 def find_random_move(legal_moves):
@@ -105,13 +117,20 @@ def score_board(gamestate):
     elif gamestate.draw:
         return STALEMATE
     score = 0
+    weights_impact = 8
     for row in range(8):
         for col in range(8):
-            if gamestate.board[row][col][0] == 'w':
-                score += piece_values[gamestate.board[row][col][1]]
-            elif gamestate.board[row][col][0] == 'b':
-                score -= piece_values[gamestate.board[row][col][1]]
+            square = gamestate.board[row][col]
+            piece_score = 0
+            if square != '--':  # not blank
+                if square[1] == 'n':
+                    piece_score = piece_position_scores['n'][row][col] / weights_impact
+                if square[0] == 'w':
+                    score += piece_values[square[1]] + piece_score
+                elif gamestate.board[row][col][0] == 'b':
+                    score -= piece_values[square[1]] + piece_score
     return score
+
 """
 Score the board
 """
