@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 3
+DEPTH = 4
 
 knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
@@ -20,8 +20,62 @@ knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
                  [1, 1, 1, 1, 1, 1, 1, 1]]  # TODO: tweak knight scores
 
-piece_position_scores = {'n': knight_scores}
+king_scores =   [[1, 3, 3, 1, 1, 1, 3, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 3, 3, 1, 1, 1, 3, 1]]  # prefers castles?!?
 
+queen_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 1, 1, 1, 1, 1, 1, 1]]
+
+bishop_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
+                 [1, 3, 2, 3, 3, 2, 3, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 4, 4, 3, 2, 1],
+                 [1, 2, 3, 3, 3, 3, 2, 1],
+                 [1, 3, 2, 3, 3, 2, 3, 1],
+                 [1, 1, 1, 1, 1, 1, 1, 1]]  # allows for fiancheetos
+
+rook_scores =   [[2, 1, 1, 3, 3, 2, 1, 2],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [1, 2, 2, 2, 2, 2, 2, 1],
+                 [2, 1, 1, 3, 3, 2, 1, 2]]  # rooks in the center but not really
+
+white_pawn_scores = [[5, 5, 5, 5, 5, 5, 5, 5],
+                     [4, 4, 4, 5, 5, 4, 4, 4],
+                     [3, 3, 4, 4, 4, 4, 3, 3],
+                     [2, 2, 3, 4, 4, 3, 2, 2],
+                     [2, 2, 3, 4, 4, 3, 2, 2],
+                     [2, 2, 2, 3, 3, 2, 2, 2],
+                     [1, 1, 1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1, 1, 1]]
+
+black_pawn_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1, 1, 1],
+                     [2, 2, 2, 3, 3, 2, 2, 2],
+                     [2, 2, 3, 4, 4, 3, 2, 2],
+                     [2, 2, 3, 4, 4, 3, 2, 2],
+                     [3, 3, 4, 4, 4, 4, 3, 3],
+                     [4, 4, 4, 5, 5, 4, 4, 4],
+                     [5, 5, 5, 5, 5, 5, 5, 5]]
+
+piece_position_scores = {'n': knight_scores, 'k': king_scores, 'q': queen_scores, 'r': rook_scores, 'b': bishop_scores,
+                         'wp': white_pawn_scores, 'bp': black_pawn_scores}
 
 
 def find_random_move(legal_moves):
@@ -121,10 +175,11 @@ def score_board(gamestate):
     for row in range(8):
         for col in range(8):
             square = gamestate.board[row][col]
-            piece_score = 0
             if square != '--':  # not blank
-                if square[1] == 'n':
-                    piece_score = piece_position_scores['n'][row][col] / weights_impact
+                if square != 'wp' and square != 'bp':
+                    piece_score = piece_position_scores[square[1]][row][col] / weights_impact
+                else:
+                    piece_score = piece_position_scores[square][row][col] / weights_impact
                 if square[0] == 'w':
                     score += piece_values[square[1]] + piece_score
                 elif gamestate.board[row][col][0] == 'b':
