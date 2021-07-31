@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 3
+DEPTH = 4
 
 knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
@@ -128,9 +128,25 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
         return turn_mult * score_board(gamestate)
 
     # move ordering (check more forcing moves first) - implement later
+    # only relevant if capures are available aka after first moves
+    if len(gamestate.move_log) > 2:
+        sorted_moves = []
+        # check each legal move and sort them, captures and checks first
+        for i in range(len(legal_moves) - 1, -1, -1):
+            move = legal_moves[i]
+            gamestate.make_move(move)
+            if move.piece_captured != '--' or gamestate.in_check:  # move is capture or check
+                sorted_moves.append(move)
+                legal_moves.pop(i)
+            gamestate.undo_move()
+        # append the rest to the new list
+        for unforcing_move in legal_moves:
+            sorted_moves.append(unforcing_move)
+    else:
+        sorted_moves = legal_moves
 
     max_score = -CHECKMATE
-    for move in legal_moves:
+    for move in sorted_moves:
         counter += 1
         gamestate.make_move(move)
         next_moves = gamestate.get_legal_moves()
@@ -166,6 +182,11 @@ def find_move_nega_max(gamestate, legal_moves, depth, turn_mult):
     return max_score
 
 
+"""
+Score the board
+"""
+
+
 def score_board(gamestate):
     if gamestate.checkmate:
         if gamestate.white_to_move:
@@ -190,12 +211,8 @@ def score_board(gamestate):
                     score -= piece_values[square[1]] + piece_score
     return score
 
-"""
-Score the board
-"""
 
-
-def score_material(board):
+"""def score_material(board):
     score = 0
     for row in range(8):
         for col in range(8):
@@ -203,5 +220,5 @@ def score_material(board):
                 score += piece_values[board[row][col][1]]
             elif board[row][col][0] == 'b':
                 score -= piece_values[board[row][col][1]]
-    return score
+    return score"""
 
