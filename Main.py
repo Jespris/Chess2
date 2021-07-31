@@ -12,6 +12,7 @@ FPS = 30
 
 def main():
     p.init()
+    p.mixer.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
     p.display.set_caption('Chess2')
     screen.fill(p.Color("Gray"))
@@ -24,7 +25,7 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
+    white_human = True
     black_human = True
     AI_thinking = False
     move_finder_process = None
@@ -73,6 +74,7 @@ def main():
                                 if move == legal_moves[i]:
                                     move = legal_moves[i]
                                     gamestate.make_move(move)
+                                    play_sound('move_piece', 0.5)
                                     move_made = True
                                     sq_selected = ()  # reset clicks
                                     mouse_clicks = []
@@ -112,6 +114,7 @@ def main():
                             if move == legal_moves[i]:
                                 move = legal_moves[i]
                                 gamestate.make_move(move)
+                                play_sound('move_piece', 0.5)
                                 move_made = True
                                 sq_selected = ()  # reset clicks
                                 mouse_clicks = []
@@ -134,6 +137,7 @@ def main():
                 if AI_move is None:
                     AI_move = SmartMoveFinder.find_random_move(legal_moves)
                 gamestate.make_move(AI_move)
+                play_sound('move_piece', 0.5)
                 print("Played move: " + gamestate.notation_log[-1])
                 move_made = True
                 AI_thinking = False
@@ -156,6 +160,12 @@ def main():
 
         clock.tick(FPS)
         p.display.flip()
+
+
+def play_sound(sound_name, volume):
+    sound = p.mixer.Sound(sound_name + '.mp3')
+    sound.set_volume(volume)
+    sound.play()
 
 
 if __name__ == "__main__":

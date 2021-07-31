@@ -653,7 +653,6 @@ class Move:
         # castle move
         self.is_castle_move = is_castle_move
 
-
         self.move_ID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
 
     """
