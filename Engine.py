@@ -92,19 +92,12 @@ class GameState:
         self.castle_rights_log.append((CastleRights(self.castle_rights.wks, self.castle_rights.bks,
                                                self.castle_rights.wqs, self.castle_rights.bqs)))
 
-        # pawn takes notation
-        if move.piece_moved[1] == 'p' and move.start_col != move.end_col:
-            self.notation_log.pop()
-            self.notation_log.append(Move.cols_to_files[move.start_col] + move.get_notation())
-
         # check and checkmate notation
-        self.get_legal_moves()
-        if self.in_check and not self.checkmate:
+        king_row, king_col = self.white_king if self.white_to_move else self.black_king
+        ally = 'w' if self.white_to_move else 'b'
+        if self.get_square_under_attack(king_row, king_col, ally):
             temp = self.notation_log.pop()
             self.notation_log.append(temp + '+')
-        if self.checkmate:
-            temp = self.notation_log.pop()
-            self.notation_log.append(temp + '#')
 
         # check for draws
         self.get_draw()
@@ -579,6 +572,45 @@ class GameState:
                     black_pieces += 1
         if white_pieces == 1 and black_pieces == 1:
             self.draw = True
+        # threefold repetition
+        # check if the same move is made three times in a row
+        if len(self.move_log) >= 10:
+            player_repeating = False
+            opponent_repeating = False
+            player_move1 = self.move_log[-1]
+            player_move2 = self.move_log[-3]
+            checking_move1 = [player_move1.start_row, player_move1.start_col, player_move1.end_row, player_move1.end_col]
+            checking_move2 = [player_move2.start_row, player_move2.start_col, player_move2.end_row, player_move2.end_col]
+            for i in range(-5, -10, -2):
+                test_move = self.move_log[i]
+                if i == -7:
+                    checking_move = checking_move2
+                else:
+                    checking_move = checking_move1
+                if [test_move.start_row, test_move.start_col, test_move.end_row, test_move.end_col] == checking_move:
+                    player_repeating = True
+                else:
+                    player_repeating = False
+            if player_repeating:  # need to check opponents moves
+                opponent_move1 = self.move_log[-2]
+                opponent_move2 = self.move_log[-4]
+                checking_move1 = [opponent_move1.start_row, opponent_move1.start_col, opponent_move1.end_row, opponent_move1.end_col]
+                checking_move2 = [opponent_move2.start_row, opponent_move2.start_col, opponent_move2.end_row,
+                                  opponent_move2.end_col]
+                for j in range(-6, -9, -2):
+                    test_move = self.move_log[j]
+                    if j == -8:
+                        checking_move = checking_move2
+                    else:
+                        checking_move = checking_move1
+                    if [test_move.start_row, test_move.start_col, test_move.end_row,
+                        test_move.end_col] == checking_move:
+                        opponent_repeating = True
+                    else:
+                        opponent_repeating = False
+            if player_repeating and opponent_repeating:
+                self.draw = True
+                return
         # 50 move rule, go backwards in movelog, if no captures in 50 moves or pawn pushes => draw
         if len(self.move_log) > 50:
             for i in range(-1, -50, -1):
@@ -638,6 +670,8 @@ class Move:
     def get_notation(self):
         piece = '' if self.piece_moved[1] == 'p' else self.piece_moved[1].upper()
         captures = 'x' if self.piece_captured != '--' else ''
+        if piece == '' and captures:  # pawn captures
+            piece = self.cols_to_files[self.start_col]
         return piece + captures + self.get_rank_file(self.end_row, self.end_col)
 
     def get_rank_file(self, r, c):

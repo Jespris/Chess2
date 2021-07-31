@@ -25,7 +25,7 @@ def main():
     Display.load_images()
     game_over = False
     white_human = False
-    black_human = False
+    black_human = True
     AI_thinking = False
     move_finder_process = None
     flag = True
@@ -49,7 +49,7 @@ def main():
             if e.type == p.MOUSEBUTTONDOWN:
                 mouse_down = True
                 mouse_pos = p.mouse.get_pos()
-                if not game_over and is_human_turn:
+                if not game_over:
                     col = (mouse_pos[0] - BOARDGAP) // SQ_SIZE
                     row = (mouse_pos[1] - BOARDGAP) // SQ_SIZE
                     if 0 <= row < 8 and 0 <= col < 8:  # inside board
@@ -67,7 +67,7 @@ def main():
                             else:
                                 sq_selected = (row, col)
                                 mouse_clicks.append(sq_selected)
-                        if len(mouse_clicks) == 2:  # successful move
+                        if len(mouse_clicks) == 2 and is_human_turn:  # successful move
                             move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
                             for i in range(len(legal_moves)):
                                 if move == legal_moves[i]:
@@ -105,7 +105,7 @@ def main():
                         else:
                             sq_selected = ()
                             mouse_clicks = []
-                    if len(mouse_clicks) == 2:  # successful move
+                    if len(mouse_clicks) == 2 and is_human_turn:  # successful move
                         move = Engine.Move(mouse_clicks[0], mouse_clicks[1], gamestate.board)
                         print(move.get_notation())
                         for i in range(len(legal_moves)):
@@ -134,6 +134,7 @@ def main():
                 if AI_move is None:
                     AI_move = SmartMoveFinder.find_random_move(legal_moves)
                 gamestate.make_move(AI_move)
+                print("Played move: " + gamestate.notation_log[-1])
                 move_made = True
                 AI_thinking = False
 
