@@ -17,6 +17,7 @@ def main():
     p.display.set_caption('Chess2')
     screen.fill(p.Color("Gray"))
     gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
+    gamestate.get_boardstate()
     clock = p.time.Clock()
     sq_selected = ()
     mouse_clicks = []
@@ -26,7 +27,7 @@ def main():
     Display.load_images()
     game_over = False
     white_human = True
-    black_human = True
+    black_human = False
     AI_thinking = False
     move_finder_process = None
     flag = True

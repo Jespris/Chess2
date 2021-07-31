@@ -616,6 +616,37 @@ class GameState:
                     return
             self.draw = True
 
+    def openings(self):
+        moves = []
+        if not self.move_log:  # white first
+            # first, two square pawn push
+            for col in range(2, 6):
+                moves.append(Move((6, col), (4, col), self.board))
+            # one square pawn push
+            for col in range(1, 7):
+                moves.append(Move((6, col), (5, col), self.board))
+            # knight moves
+                moves.append(Move((7, 1), (5, 2), self.board))
+                moves.append(Move((7, 6), (5, 5), self.board))
+        else:  # black moves
+            # first, two square pawn push
+            for col in range(2, 6):
+                moves.append(Move((1, col), (3, col), self.board))
+            # one square pawn push
+            for col in range(1, 7):
+                moves.append(Move((1, col), (2, col), self.board))
+                # knight moves
+                moves.append(Move((0, 1), (2, 2), self.board))
+                moves.append(Move((0, 6), (2, 5), self.board))
+        return moves
+
+    def get_boardstate(self):
+        board_string = ''
+        for row in range(8):
+            for col in range(8):
+                board_string += self.board[row][col]
+        board_state = (board_string, self.castle_rights_log[-1].castles_ID, self.en_passant_possible)
+        return board_state
 
 class CastleRights:  # for storing the info about castling rights
     def __init__(self, wks, bks, wqs, bqs):
@@ -623,6 +654,17 @@ class CastleRights:  # for storing the info about castling rights
         self.bks = bks
         self.wqs = wqs
         self.bqs = bqs
+
+        four = '1' if self.wks else '0'
+        three = '1' if self.bks else '0'
+        two = '1' if self.wqs else '0'
+        one = '1' if self.bqs else '0'
+        self.castles_ID = int(four + three + two + one)
+
+    def __eq__(self, other):
+        if isinstance(other, CastleRights):
+            return self.castles_ID == other.castles_ID
+        return False
 
 
 class Move:

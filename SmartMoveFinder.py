@@ -9,8 +9,9 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 5
+DEPTH = 4
 ENDGAME = False
+BOARD_HASH = {}
 
 knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
@@ -140,13 +141,13 @@ def find_move_min_max(gamestate, legal_moves, depth, white_to_move):
 
 
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult):
-    global next_move, counter, ENDGAME
+    global next_move, counter, ENDGAME, BOARD_HASH
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
     # move ordering (check more forcing moves first) - implement later
     # only relevant if capures are available aka after first moves
-    if len(gamestate.move_log) > 2:
+    if len(gamestate.move_log) >= 2:
         sorted_moves = []
         # check each legal move and sort them, captures and checks first
         for i in range(len(legal_moves) - 1, -1, -1):
@@ -168,8 +169,8 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
         for unforcing_move in legal_moves:
             sorted_moves.append(unforcing_move)
     else:
-        r.shuffle(legal_moves)
-        sorted_moves = legal_moves
+        openings = gamestate.openings()
+        sorted_moves = [openings[r.randint(0, len(openings) - 1)]]
 
     max_score = -CHECKMATE
     for move in sorted_moves:
@@ -181,6 +182,12 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
             ENDGAME = False
         next_moves = gamestate.get_legal_moves()
         score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
+        """board_state = gamestate.get_boardstate()
+        if board_state not in BOARD_HASH:
+            score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
+            BOARD_HASH[board_state] = score
+        else:
+            score = BOARD_HASH[board_state]"""
         if score > max_score:
             max_score = score
             if depth == DEPTH:
