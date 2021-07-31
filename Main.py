@@ -74,7 +74,7 @@ def main():
                                 if move == legal_moves[i]:
                                     move = legal_moves[i]
                                     gamestate.make_move(move)
-                                    play_sound('move_piece', 0.5)
+                                    # play_sound('move_piece', 0.5)
                                     move_made = True
                                     sq_selected = ()  # reset clicks
                                     mouse_clicks = []
@@ -114,7 +114,7 @@ def main():
                             if move == legal_moves[i]:
                                 move = legal_moves[i]
                                 gamestate.make_move(move)
-                                play_sound('move_piece', 0.5)
+                                # play_sound('move_piece', 0.5)
                                 move_made = True
                                 sq_selected = ()  # reset clicks
                                 mouse_clicks = []
@@ -137,13 +137,14 @@ def main():
                 if AI_move is None:
                     AI_move = SmartMoveFinder.find_random_move(legal_moves)
                 gamestate.make_move(AI_move)
-                play_sound('move_piece', 0.5)
+                # play_sound('move_piece', 0.5)
                 print("Played move: " + gamestate.notation_log[-1])
                 move_made = True
                 AI_thinking = False
 
         if move_made:
             legal_moves = gamestate.get_legal_moves()
+            gamestate.get_draw()
 
         Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos())
 
@@ -163,7 +164,7 @@ def main():
 
 
 def play_sound(sound_name, volume):
-    sound = p.mixer.Sound(sound_name + '.mp3')
+    sound = p.mixer.Sound('sounds/' + sound_name + '.mp3')
     sound.set_volume(volume)
     sound.play()
 

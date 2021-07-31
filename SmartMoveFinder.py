@@ -103,7 +103,6 @@ def find_random_move(legal_moves):
 def find_best_move(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME
     next_move = None
-    r.shuffle(legal_moves)
     counter = 0
     find_move_nega_max_alpha_beta(gamestate, legal_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1)
     print("Looked at", counter, "boardstates")
@@ -157,10 +156,19 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
                 sorted_moves.append(move)
                 legal_moves.pop(i)
             gamestate.undo_move()
+        # then pieces before pawns
+        for i in range(len(legal_moves) - 1, -1, -1):
+            move = legal_moves[i]
+            gamestate.make_move(move)
+            if move.piece_moved[1] != 'p':
+                sorted_moves.append(move)
+                legal_moves.pop(i)
+            gamestate.undo_move()
         # append the rest to the new list
         for unforcing_move in legal_moves:
             sorted_moves.append(unforcing_move)
     else:
+        r.shuffle(legal_moves)
         sorted_moves = legal_moves
 
     max_score = -CHECKMATE

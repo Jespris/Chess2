@@ -99,9 +99,6 @@ class GameState:
             temp = self.notation_log.pop()
             self.notation_log.append(temp + '+')
 
-        # check for draws
-        self.get_draw()
-
     def update_castle_rights(self, move):
         if move.piece_moved == 'wk':
             self.castle_rights.wqs = False
@@ -612,8 +609,8 @@ class GameState:
                 self.draw = True
                 return
         # 50 move rule, go backwards in movelog, if no captures in 50 moves or pawn pushes => draw
-        if len(self.move_log) > 50:
-            for i in range(-1, -50, -1):
+        if len(self.move_log) >= 100:
+            for i in range(-1, -100, -1):
                 move = self.move_log[i]
                 if move.piece_captured != '--' or move.piece_moved[1] == 'p':
                     return
