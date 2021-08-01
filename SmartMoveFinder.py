@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-CPU_PERFORMANCE = 50
+CPU_PERFORMANCE = 10
 ENDGAME = False
 BOARD_HASH = {}
 
@@ -86,6 +86,24 @@ black_pawn_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                      [4, 5, 6, 7, 7, 6, 5, 4],
                      [9, 9, 9, 9, 9, 9, 9, 9]]
 
+white_square_control = [[4, 4, 4, 4, 4, 4, 4, 4],
+                     [3, 4, 4, 4, 4, 4, 4, 3],
+                     [3, 3, 4, 4, 4, 4, 3, 3],
+                     [2, 3, 3, 4, 4, 3, 3, 2],
+                     [2, 2, 3, 4, 4, 3, 2, 2],
+                     [2, 2, 2, 3, 3, 2, 2, 2],
+                     [1, 1, 1, 2, 2, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1, 1, 1]]
+
+black_square_control = [[1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 2, 2, 1, 1, 1],
+                        [2, 2, 2, 3, 3, 2, 2, 2],
+                        [2, 2, 3, 4, 4, 3, 2, 2],
+                        [2, 3, 3, 4, 4, 3, 3, 2],
+                        [3, 3, 4, 4, 4, 4, 3, 3],
+                        [3, 4, 4, 4, 4, 4, 4, 3],
+                        [4, 4, 4, 4, 4, 4, 4, 4]]
+
 piece_position_scores = {'n': knight_scores, 'k': opening_king_scores if not ENDGAME else endgame_king_scores,
                          'q': queen_scores, 'r': rook_scores, 'b': bishop_scores, 'wp': white_pawn_scores,
                          'bp': black_pawn_scores}
@@ -104,8 +122,11 @@ def find_random_move(legal_moves):
 def find_best_move(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies, candidate_moves
     next_move = None
+    if len(legal_moves) == 1:
+        next_move = legal_moves[0]
     candidate_moves = []
     counter = 0
+    BOARD_HASH = {}
     board_state_copies = 0
     performance = CPU_PERFORMANCE * 1000
     if len(gamestate.boardstates_log) > 3:
@@ -117,7 +138,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
             actual_depth -= 1
             print("Decreased depth!")
     else:
-        actual_depth = 5
+        actual_depth = 4
     find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, actual_depth - 1, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth - 1)
 
     BOARD_HASH = {}
@@ -264,7 +285,7 @@ def score_board(gamestate):
         return STALEMATE
     white_squares_controlled = []
     black_squares_controlled = []
-    sq_controlled_weight = 6
+    sq_controlled_weight = 10
     score = 0
     weights_impact = 8
     for row in range(8):
@@ -335,7 +356,17 @@ def score_board(gamestate):
                         else:
                             if [new_row, new_col] not in black_squares_controlled and is_inside_board(new_row, new_col):
                                 black_squares_controlled.append([new_row, new_col])
-    square_controlled_eval = (len(white_squares_controlled) - len(black_squares_controlled)) / sq_controlled_weight
+    white_control_points = 0
+    black_control_points = 0
+    for row in range(8):
+        for col in range(8):
+            if [row, col] in white_squares_controlled:
+                white_control_points += white_square_control[row][col]
+            if [row, col] in black_squares_controlled:
+                black_control_points += black_square_control[row][col]
+
+    square_controlled_eval = (white_control_points - black_control_points) / sq_controlled_weight
+    # print("Square controlled evaluation:", square_controlled_eval)
     score += square_controlled_eval
     return score
 
