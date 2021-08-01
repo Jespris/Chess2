@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-CPU_PERFORMANCE = 20
+CPU_PERFORMANCE = 50
 ENDGAME = False
 BOARD_HASH = {}
 
@@ -102,11 +102,11 @@ def find_random_move(legal_moves):
 
 
 def find_best_move(gamestate, legal_moves, return_queue):
-    global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
+    global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies, candidate_moves
     next_move = None
+    candidate_moves = []
     counter = 0
     board_state_copies = 0
-    BOARD_HASH = {}
     performance = CPU_PERFORMANCE * 1000
     if len(gamestate.boardstates_log) > 3:
         actual_depth = gamestate.boardstates_log[-1][1]
@@ -118,7 +118,30 @@ def find_best_move(gamestate, legal_moves, return_queue):
             print("Decreased depth!")
     else:
         actual_depth = 5
-    find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+    find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, actual_depth - 1, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth - 1)
+
+    BOARD_HASH = {}
+    counter = 0
+    if len(candidate_moves) > 1:
+        good_moves = []
+        candidate_moves.sort(key=lambda x: x[1])  # sort by eval
+        best_candidate_eval = candidate_moves[-1][1]  # last in list is best move with bad depth
+        for move in range(len(candidate_moves) - 1, -1, -1):
+            if candidate_moves[move][1] < best_candidate_eval - abs(best_candidate_eval) / 10:
+                candidate_moves.pop(move)
+        cand_moves = ''
+        candidate_moves.reverse()
+        for move in candidate_moves:
+            good_moves.append(move[0])
+            cand_moves += move[0].get_notation() + ", "
+        print("candidate moves:", cand_moves)
+        if len(good_moves) > 1:
+            find_move_nega_max_alpha_beta(gamestate, good_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+        else:
+            next_move = good_moves[0]
+    else:
+        if candidate_moves:
+            next_move = candidate_moves[0][0]
     print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
     print(gamestate.boardstates_log)
     return_queue.put((next_move, (counter, actual_depth)))
@@ -126,6 +149,41 @@ def find_best_move(gamestate, legal_moves, return_queue):
 
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
+    if depth == 0:
+        return turn_mult * score_board(gamestate)
+
+    max_score = -CHECKMATE
+    for move in legal_moves:
+        counter += 1
+        gamestate.make_move(move)
+        if not ENDGAME and len(gamestate.move_log) > 50:
+            ENDGAME = evaluate_endgame(gamestate.board)
+        next_moves = gamestate.get_legal_moves()
+        board_state = gamestate.get_boardstate()
+        if board_state not in BOARD_HASH:
+            # print("New board state")
+            score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult, actual_depth)
+            BOARD_HASH[board_state] = score
+        else:
+            # print("Board state already found!")
+            board_state_copies += 1
+            score = BOARD_HASH[board_state]
+            # print("copied board state evaluated as", score)
+        if score > max_score:
+            max_score = score
+            if depth == actual_depth:
+                print("new best move", move.get_notation(), "evaluation:", score)
+                next_move = move
+        gamestate.undo_move()
+        if max_score > alpha:  # pruning happens
+            alpha = max_score
+        if alpha >= beta:
+            break
+    return max_score
+
+
+def find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
+    global candidate_moves, counter, ENDGAME, BOARD_HASH, board_state_copies
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
@@ -150,6 +208,7 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
                 legal_moves.pop(i)
             gamestate.undo_move()
         # append the rest to the new list
+        r.shuffle(legal_moves)
         for unforcing_move in legal_moves:
             sorted_moves.append(unforcing_move)
     else:
@@ -176,8 +235,12 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
         if score > max_score:
             max_score = score
             if depth == actual_depth:
-                print("looked at move", move.get_notation(), "evaluation:", score)
-                next_move = move
+                # print("new best move:", move.get_notation(), "evaluation:", score)
+                candidate_moves.append((move, score))
+        elif score + (abs(max_score) / 10) > max_score:
+            if depth == actual_depth:
+                # print("semi good move:", move.get_notation(), "evaluation:", score)
+                candidate_moves.append((move, score))
         gamestate.undo_move()
         if max_score > alpha:  # pruning happens
             alpha = max_score
@@ -201,7 +264,7 @@ def score_board(gamestate):
         return STALEMATE
     white_squares_controlled = []
     black_squares_controlled = []
-    sq_controlled_weight = 8
+    sq_controlled_weight = 6
     score = 0
     weights_impact = 8
     for row in range(8):
@@ -273,9 +336,6 @@ def score_board(gamestate):
                             if [new_row, new_col] not in black_squares_controlled and is_inside_board(new_row, new_col):
                                 black_squares_controlled.append([new_row, new_col])
     square_controlled_eval = (len(white_squares_controlled) - len(black_squares_controlled)) / sq_controlled_weight
-    """print(white_squares_controlled)
-    print("Squares controlled evaluation:", square_controlled_eval)
-    print("White squares controlled:", len(white_squares_controlled), "  Black squares controlled:", len(black_squares_controlled))"""
     score += square_controlled_eval
     return score
 
