@@ -17,12 +17,12 @@ class GameState:
         self.squaresize = sq_size
         self.board = [
             ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
-            ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
+            ['bp', 'bp', 'bp', 'bp', '--', 'bp', 'bp', 'bp'],
+            ['--', '--', '--', '--', 'bp', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
+            ['--', '--', '--', '--', '--', 'wp', '--', '--'],
+            ['wp', 'wp', 'wp', 'wp', 'wp', '--', 'wp', 'wp'],
             ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr'],
         ]
         self.legal_moves = []
@@ -645,7 +645,7 @@ class GameState:
         for row in range(8):
             for col in range(8):
                 board_string += self.board[row][col]
-        board_state = (board_string, self.castle_rights_log[-1].castles_ID, self.en_passant_possible)
+        board_state = (board_string, self.castle_rights_log[-1].castles_ID, self.en_passant_possible, self.white_to_move)
         return board_state
 
 class CastleRights:  # for storing the info about castling rights

@@ -40,6 +40,7 @@ def main():
                 if e.key == p.K_z:
                     gamestate.undo_move()
                     move_made = True  # will call get_legal moves later
+                    game_over = False
                 if e.key == p.K_n:
                     gamestate.promote_to = 'n'
                 if e.key == p.K_b:

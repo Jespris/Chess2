@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 4
+DEPTH = 5
 ENDGAME = False
 BOARD_HASH = {}
 
@@ -41,23 +41,23 @@ endgame_king_scores =   [[1, 1, 1, 1, 1, 1, 1, 1],
                          [1, 1, 1, 1, 1, 1, 1, 1]]  # active king
 
 
-queen_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
+queen_scores = [[2, 1, 1, 1, 1, 1, 1, 2],
                  [1, 2, 2, 2, 2, 2, 2, 1],
                  [1, 2, 3, 3, 3, 3, 2, 1],
                  [1, 2, 3, 4, 4, 3, 2, 1],
                  [1, 2, 3, 4, 4, 3, 2, 1],
                  [1, 2, 3, 3, 3, 3, 2, 1],
                  [1, 2, 2, 2, 2, 2, 2, 1],
-                 [1, 1, 1, 1, 1, 1, 1, 1]]
+                 [2, 1, 1, 1, 1, 1, 1, 2]]
 
-bishop_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
-                 [1, 3, 2, 3, 3, 2, 3, 1],
-                 [1, 2, 3, 3, 3, 3, 2, 1],
+bishop_scores = [[4, 3, 2, 1, 1, 2, 3, 4],
+                 [3, 4, 3, 2, 2, 3, 4, 3],
+                 [2, 3, 4, 3, 3, 4, 3, 2],
                  [1, 2, 3, 4, 4, 3, 2, 1],
                  [1, 2, 3, 4, 4, 3, 2, 1],
-                 [1, 2, 3, 3, 3, 3, 2, 1],
-                 [1, 3, 2, 3, 3, 2, 3, 1],
-                 [1, 1, 1, 1, 1, 1, 1, 1]]  # allows for fiancheetos
+                 [2, 3, 4, 3, 3, 4, 3, 2],
+                 [3, 4, 3, 2, 2, 3, 4, 3],
+                 [4, 3, 2, 1, 1, 2, 3, 4]]  # allows for fiancheetos
 
 rook_scores =   [[2, 1, 1, 3, 3, 2, 1, 2],
                  [1, 2, 2, 2, 2, 2, 2, 1],
@@ -68,10 +68,10 @@ rook_scores =   [[2, 1, 1, 3, 3, 2, 1, 2],
                  [1, 2, 2, 2, 2, 2, 2, 1],
                  [2, 1, 1, 3, 3, 2, 1, 2]]  # rooks in the center but not really
 
-white_pawn_scores = [[5, 5, 5, 5, 5, 5, 5, 5],
-                     [4, 4, 4, 5, 5, 4, 4, 4],
-                     [3, 3, 4, 4, 4, 4, 3, 3],
-                     [2, 2, 3, 4, 4, 3, 2, 2],
+white_pawn_scores = [[9, 9, 9, 9, 9, 9, 9, 9],
+                     [4, 5, 6, 7, 7, 6, 5, 4],
+                     [3, 4, 5, 6, 6, 5, 4, 3],
+                     [2, 3, 4, 5, 5, 4, 3, 2],
                      [2, 2, 3, 4, 4, 3, 2, 2],
                      [2, 2, 2, 3, 3, 2, 2, 2],
                      [1, 1, 1, 0, 0, 1, 1, 1],
@@ -81,10 +81,10 @@ black_pawn_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                      [1, 1, 1, 0, 0, 1, 1, 1],
                      [2, 2, 2, 3, 3, 2, 2, 2],
                      [2, 2, 3, 4, 4, 3, 2, 2],
-                     [2, 2, 3, 4, 4, 3, 2, 2],
-                     [3, 3, 4, 4, 4, 4, 3, 3],
-                     [4, 4, 4, 5, 5, 4, 4, 4],
-                     [5, 5, 5, 5, 5, 5, 5, 5]]
+                     [2, 3, 4, 5, 5, 4, 3, 2],
+                     [3, 4, 5, 6, 6, 5, 4, 3],
+                     [4, 5, 6, 7, 7, 6, 5, 4],
+                     [9, 9, 9, 9, 9, 9, 9, 9]]
 
 piece_position_scores = {'n': knight_scores, 'k': opening_king_scores if not ENDGAME else endgame_king_scores,
                          'q': queen_scores, 'r': rook_scores, 'b': bishop_scores, 'wp': white_pawn_scores,
@@ -102,46 +102,17 @@ def find_random_move(legal_moves):
 
 
 def find_best_move(gamestate, legal_moves, return_queue):
-    global next_move, counter, ENDGAME
+    global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     next_move = None
     counter = 0
+    board_state_copies = 0
     find_move_nega_max_alpha_beta(gamestate, legal_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1)
-    print("Looked at", counter, "boardstates")
+    print("Looked at", counter, "boardstates, with", board_state_copies, "skipped copies of board states")
     return_queue.put(next_move)
 
 
-def find_move_min_max(gamestate, legal_moves, depth, white_to_move):
-    global next_move, counter
-    if depth == 0:
-        return score_material(gamestate.board)
-    if white_to_move:  # maximize
-        max_score = -CHECKMATE
-        for move in legal_moves:
-            gamestate.make_move(move)
-            next_moves = gamestate.get_legal_moves()
-            score = find_move_min_max(gamestate, next_moves, depth - 1, False)
-            if score > max_score:
-                max_score = score
-                if depth == DEPTH:
-                    next_move = move
-            gamestate.undo_move()
-        return max_score
-    else:
-        min_score = CHECKMATE
-        for move in legal_moves:
-            gamestate.make_move(move)
-            next_moves = gamestate.get_legal_moves()
-            score = find_move_min_max(gamestate, next_moves, depth - 1, True)
-            if score < min_score:
-                min_score = score
-                if depth == DEPTH:
-                    next_move = move
-            gamestate.undo_move()
-        return min_score
-
-
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult):
-    global next_move, counter, ENDGAME, BOARD_HASH
+    global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
@@ -181,41 +152,25 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
         else:
             ENDGAME = False
         next_moves = gamestate.get_legal_moves()
-        score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
-        """board_state = gamestate.get_boardstate()
+        board_state = gamestate.get_boardstate()
         if board_state not in BOARD_HASH:
+            # print("New board state")
             score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
             BOARD_HASH[board_state] = score
         else:
-            score = BOARD_HASH[board_state]"""
+            # print("Board state already found!")
+            board_state_copies += 1
+            score = BOARD_HASH[board_state]
+            # print("copied board state evaluated as", score)
         if score > max_score:
             max_score = score
             if depth == DEPTH:
-                next_move = move
                 print("looking at move", move.get_notation(), "evaluating as:", score)
         gamestate.undo_move()
         if max_score > alpha:  # pruning happens
             alpha = max_score
         if alpha >= beta:
             break
-    return max_score
-
-
-def find_move_nega_max(gamestate, legal_moves, depth, turn_mult):
-    global next_move
-    if depth == 0:
-        return turn_mult * score_board(gamestate)
-
-    max_score = -CHECKMATE
-    for move in legal_moves:
-        gamestate.make_move(move)
-        next_moves = gamestate.get_legal_moves()
-        score = -find_move_nega_max(gamestate, next_moves, depth - 1, -turn_mult)
-        if score > max_score:
-            max_score = score
-            if depth == DEPTH:
-                next_move = move
-        gamestate.undo_move()
     return max_score
 
 
