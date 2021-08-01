@@ -17,12 +17,12 @@ class GameState:
         self.squaresize = sq_size
         self.board = [
             ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
-            ['bp', 'bp', 'bp', 'bp', '--', 'bp', 'bp', 'bp'],
-            ['--', '--', '--', '--', 'bp', '--', '--', '--'],
+            ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
             ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', 'wp', '--', '--'],
-            ['wp', 'wp', 'wp', 'wp', 'wp', '--', 'wp', 'wp'],
+            ['--', '--', '--', '--', '--', '--', '--', '--'],
+            ['--', '--', '--', '--', '--', '--', '--', '--'],
+            ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
             ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr'],
         ]
         self.legal_moves = []
@@ -42,6 +42,7 @@ class GameState:
         self.checkmate = False
         self.draw = False
         self.promote_to = 'q'
+        self.boardstates_log = []
 
     """
     MOVE

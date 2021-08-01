@@ -9,7 +9,7 @@ piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 5
+CPU_PERFORMANCE = 20
 ENDGAME = False
 BOARD_HASH = {}
 
@@ -106,12 +106,25 @@ def find_best_move(gamestate, legal_moves, return_queue):
     next_move = None
     counter = 0
     board_state_copies = 0
-    find_move_nega_max_alpha_beta(gamestate, legal_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1)
-    print("Looked at", counter, "boardstates, with", board_state_copies, "skipped copies of board states")
-    return_queue.put(next_move)
+    BOARD_HASH = {}
+    performance = CPU_PERFORMANCE * 1000
+    if len(gamestate.boardstates_log) > 3:
+        actual_depth = gamestate.boardstates_log[-1][1]
+        if gamestate.boardstates_log[-1][0] < performance and gamestate.boardstates_log[-2][0] < performance:  # too low depth
+            actual_depth += 1
+            print("Increased depth!")
+        elif gamestate.boardstates_log[-1][0] > performance * 5 and gamestate.boardstates_log[-2][0] > performance * 5:  # too high depth
+            actual_depth -= 1
+            print("Decreased depth!")
+    else:
+        actual_depth = 5
+    find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+    print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
+    print(gamestate.boardstates_log)
+    return_queue.put((next_move, (counter, actual_depth)))
 
 
-def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult):
+def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     if depth == 0:
         return turn_mult * score_board(gamestate)
@@ -147,15 +160,13 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
     for move in sorted_moves:
         counter += 1
         gamestate.make_move(move)
-        if len(gamestate.move_log) >= 60:  # difference in king moves after move 30
-            ENDGAME = True
-        else:
-            ENDGAME = False
+        if not ENDGAME and len(gamestate.move_log) > 50:
+            ENDGAME = evaluate_endgame(gamestate.board)
         next_moves = gamestate.get_legal_moves()
         board_state = gamestate.get_boardstate()
         if board_state not in BOARD_HASH:
             # print("New board state")
-            score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult)
+            score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult, actual_depth)
             BOARD_HASH[board_state] = score
         else:
             # print("Board state already found!")
@@ -164,8 +175,9 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
             # print("copied board state evaluated as", score)
         if score > max_score:
             max_score = score
-            if depth == DEPTH:
-                print("looking at move", move.get_notation(), "evaluating as:", score)
+            if depth == actual_depth:
+                print("looked at move", move.get_notation(), "evaluation:", score)
+                next_move = move
         gamestate.undo_move()
         if max_score > alpha:  # pruning happens
             alpha = max_score
@@ -266,6 +278,17 @@ def score_board(gamestate):
     print("White squares controlled:", len(white_squares_controlled), "  Black squares controlled:", len(black_squares_controlled))"""
     score += square_controlled_eval
     return score
+
+
+def evaluate_endgame(board):
+    pieces = 0
+    for row in range(8):
+        for col in range(8):
+            if board[row][col] != '--' and board[row][col][1] != 'p':
+                pieces += 1
+    if pieces > 4:
+        return False
+    return True
 
 
 def is_inside_board(row, col):
