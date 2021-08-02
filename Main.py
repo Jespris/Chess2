@@ -1,6 +1,6 @@
 import pygame as p
 from win32api import GetSystemMetrics
-from Chess import Engine, Display, SmartMoveFinder
+import Engine, Display, SmartMoveFinder
 from multiprocessing import Process, Queue
 
 WIDTH = GetSystemMetrics(0)
