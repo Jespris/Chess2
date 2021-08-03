@@ -180,9 +180,9 @@ def find_best_move(gamestate, legal_moves, return_queue):
     if not next_move:
         board_state_copies = 0
         actual_depth = get_good_depth(gamestate)
-        if len(gamestate.move_log) <= 1:  # opening
+        if len(gamestate.move_log) <= 10:  # opening
             next_move = gamestate.get_opening()
-        else:
+        if not next_move:
             find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
         print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
     return_queue.put((next_move, (counter, actual_depth)))

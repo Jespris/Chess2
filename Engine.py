@@ -595,28 +595,35 @@ class GameState:
             return
 
     def get_opening(self):
-        moves = []
-        if not self.move_log:  # white first
-            # first, two square pawn push
-            for col in range(2, 6):
-                moves.append(Move((6, col), (4, col), self.board))
-            # one square pawn push
-            for col in range(1, 7):
-                moves.append(Move((6, col), (5, col), self.board))
-            # knight moves
-                moves.append(Move((7, 1), (5, 2), self.board))
-                moves.append(Move((7, 6), (5, 5), self.board))
-        else:  # black moves
-            # first, two square pawn push
-            for col in range(2, 6):
-                moves.append(Move((1, col), (3, col), self.board))
-            # one square pawn push
-            for col in range(1, 7):
-                moves.append(Move((1, col), (2, col), self.board))
-                # knight moves
-                moves.append(Move((0, 1), (2, 2), self.board))
-                moves.append(Move((0, 6), (2, 5), self.board))
-        return moves[random.randint(0, len(moves) - 1)]
+        move = None
+        # hashmap of tuples of moves to reply to the move, choose a random one of those
+        moves_so_far = ''
+        for move in self.move_log:
+            moves_so_far += move.get_notation()
+
+        reti = {'Nf3': (Move((0, 6), (2, 5), self.board), Move((1, 2), (3, 2), self.board), Move((1, 3), (3, 3), self.board)),
+                'Nf3Nf6': (Move((6, 2), (4, 2), self.board), Move((6, 3), (4, 3), self.board), Move((6, 6), (5, 6), self.board)),
+                'Nf3Nf6c4': (Move((1, 2), (2, 2), self.board), Move((1, 2), (3, 2), self.board), Move((1, 4), (2, 4), self.board)),
+                'Nf3Nf6d4': (Move((1, 2), (2, 2), self.board), Move((1, 3), (3, 3), self.board), Move((1, 4), (2, 4), self.board)),
+                'Nf3Nf6g3': (Move((1, 2), (2, 2), self.board), Move((1, 2), (3, 2), self.board), Move((1, 6), (2, 6), self.board)),
+                'Nf3c5': (Move((6, 1), (5, 1), self.board), Move((6, 2), (4, 2), self.board), Move((6, 4), (4, 4), self.board)),
+                'Nf3c5b3': (Move((0, 1), (2, 2), self.board), Move((0, 6), (2, 5), self.board), Move((1, 6), (2, 6), self.board)),
+                'Nf3c5c4': (Move((0, 1), (2, 2), self.board), Move((0, 6), (2, 5), self.board), Move((1, 1), (2, 1), self.board)),
+                'Nf3c5e4': (Move((0, 1), (2, 2), self.board), Move((1, 3), (2, 3), self.board), Move((1, 4), (2, 4), self.board)),
+                'Nf6d5': (Move((6, 3), (4, 3), self.board), Move((6, 4), (5, 4), self.board), Move((6, 6), (5, 6), self.board)),
+                'Nf6d5d4': (Move((0, 1), (1, 3), self.board), Move((1, 4), (2, 4), self.board), Move((0, 6), (2, 5), self.board)),
+                'Nf6d5e3': (Move((1, 2), (3, 2), self.board), Move((1, 4), (2, 4), self.board), Move((0, 6), (2, 5), self.board)),
+                'Nf6d5g3': (Move((1, 2), (3, 2), self.board), Move((1, 6), (2, 6), self.board), Move((0, 6), (2, 5), self.board))}
+        kingspawn = {'e4': (Move((1, 4), (3, 4), self.board), Move((1, 2), (3, 2), self.board))}
+        queenspawn = {'d4': (Move((1, 3), (3, 3), self.board))}
+        english = {'c4': (Move((1, 4), (3, 4), self.board))}
+        openings = [reti, kingspawn, queenspawn, english]
+        for opening in openings:
+            if moves_so_far in opening:
+                replies = opening[moves_so_far]
+                move = replies[random.randint(0, len(replies) - 1)]
+                break
+        return move
 
     def get_boardstate(self):
         board_string = ''
