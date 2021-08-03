@@ -5,7 +5,7 @@ Responsible for finding a good move for the AI
 import random as r
 
 
-piece_values = {'k': 0, 'q': 9, 'b': 3, 'n': 3, 'r': 5, 'p': 1}
+piece_values = {6: 0, 5: 9, 4: 3, 3: 3, 2: 5, 1: 1}
 # black wants a negative score, white positive
 CHECKMATE = 1000
 STALEMATE = 0
@@ -119,7 +119,7 @@ def find_random_move(legal_moves):
     return legal_moves[r.randint(0, len(legal_moves) - 1)]
 
 
-def find_best_move_candidate_version(gamestate, legal_moves, return_queue):
+"""def find_best_move_candidate_version(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies, candidate_moves
     next_move = None
     if len(legal_moves) == 1:
@@ -165,32 +165,25 @@ def find_best_move_candidate_version(gamestate, legal_moves, return_queue):
             next_move = candidate_moves[0][0]
     print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
     print(gamestate.boardstates_log)
-    return_queue.put((next_move, (counter, actual_depth)))
+    return_queue.put((next_move, (counter, actual_depth)))"""
 
 
 def find_best_move(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     next_move = None
+    actual_depth = 1
+    counter = 0
     if len(legal_moves) == 1:
         next_move = legal_moves[0]
-    counter = 0
-    board_state_copies = 0
-    performance = CPU_PERFORMANCE * 1000
-    if len(gamestate.boardstates_log) > 3:
-        actual_depth = gamestate.boardstates_log[-1][1]
-        if gamestate.boardstates_log[-1][0] < performance and gamestate.boardstates_log[-2][0] < performance:  # too low depth
-            actual_depth += 1
-            print("Increased depth!")
-        elif gamestate.boardstates_log[-1][0] > performance * 5 and gamestate.boardstates_log[-2][0] > performance * 5:  # too high depth
-            actual_depth -= 1
-            print("Decreased depth!")
-    else:
-        actual_depth = 4
 
-    find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
-
-    print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
-    print(gamestate.boardstates_log)
+    if not next_move:
+        board_state_copies = 0
+        actual_depth = get_good_depth(gamestate)
+        if len(gamestate.move_log) <= 1:  # opening
+            next_move = gamestate.get_opening()
+        else:
+            find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+        print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
     return_queue.put((next_move, (counter, actual_depth)))
 
 
@@ -199,12 +192,16 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
+    sorted_moves = sort_legal_moves(legal_moves, gamestate)
+
+    # check if endgame
+    if not ENDGAME and len(gamestate.move_log) > 50:
+        ENDGAME = evaluate_endgame(gamestate.board)
+
     max_score = -CHECKMATE
-    for move in legal_moves:
+    for move in sorted_moves:
         counter += 1
         gamestate.make_move(move)
-        if not ENDGAME and len(gamestate.move_log) > 50:
-            ENDGAME = evaluate_endgame(gamestate.board)
         next_moves = gamestate.get_legal_moves()
         board_state = gamestate.boardstates_log[-1]
         if board_state not in BOARD_HASH:
@@ -229,13 +226,63 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
     return max_score
 
 
-def find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
+def sort_legal_moves(legal_moves, gamestate):
+    # move ordering (check more forcing moves first)
+    # only relevant if captures are available aka after first moves
+    if len(gamestate.move_log) >= 2:
+        sorted_moves = []
+        # check each legal move and sort them, captures and checks first
+        for i in range(len(legal_moves) - 1, -1, -1):
+            move = legal_moves[i]
+            gamestate.make_move(move)
+            gamestate.get_legal_moves()  # to update the in check variable
+            if move.piece_captured != 0 or gamestate.in_check:  # move is capture or check
+                sorted_moves.append(move)
+                legal_moves.pop(i)
+            gamestate.undo_move()
+        # then pieces before pawns
+        for i in range(len(legal_moves) - 1, -1, -1):
+            move = legal_moves[i]
+            gamestate.make_move(move)
+            if abs(move.piece_moved) != 1:
+                sorted_moves.append(move)
+                legal_moves.pop(i)
+            gamestate.undo_move()
+        # append the rest to the new list
+        r.shuffle(legal_moves)
+        for unforcing_move in legal_moves:
+            sorted_moves.append(unforcing_move)
+    else:
+        sorted_moves = legal_moves
+    return sorted_moves
+
+
+def get_good_depth(gamestate):
+    """performance = CPU_PERFORMANCE * 1000
+    if len(gamestate.states_depth_log) > 3:
+        depth_log = gamestate.states_depth_log
+        depth = depth_log[-1][1]
+        depth_change = 0
+        for i in range(-1, -3, -1):
+            if depth_log[i][0] < performance:  # too low depth
+                depth_change += 1
+            elif depth_log[i][0] > performance * 5:  # too high depth
+                depth_change -= 1
+        if abs(depth_change) == 2:
+            depth += depth_change // 2
+    else:
+        depth = 4"""
+    depth = 4 if not ENDGAME else 6
+    return depth
+
+
+"""def find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
     global candidate_moves, counter, ENDGAME, BOARD_HASH, board_state_copies
     if depth == 0:
         return turn_mult * score_board(gamestate)
 
-    # move ordering (check more forcing moves first) - implement later
-    # only relevant if capures are available aka after first moves
+    # move ordering (check more forcing moves first)
+    # only relevant if captures are available aka after first moves
     if len(gamestate.move_log) >= 2:
         sorted_moves = []
         # check each legal move and sort them, captures and checks first
@@ -259,7 +306,7 @@ def find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, depth, alph
         for unforcing_move in legal_moves:
             sorted_moves.append(unforcing_move)
     else:
-        openings = gamestate.openings()
+        openings = gamestate.get_opening()
         sorted_moves = [openings[r.randint(0, len(openings) - 1)]]
 
     max_score = -CHECKMATE
@@ -293,7 +340,7 @@ def find_move_nega_max_alpha_beta_candidates(gamestate, legal_moves, depth, alph
             alpha = max_score
         if alpha >= beta:
             break
-    return max_score
+    return max_score"""
 
 
 """
@@ -311,9 +358,9 @@ def score_board(gamestate):
         return STALEMATE
     white_squares_controlled = []
     black_squares_controlled = []
-    sq_controlled_weight = 10
+    sq_controlled_weight = 12  # higher = less positional impact
     score = 0
-    weights_impact = 8
+    weights_impact = 10  # higher = less positional impact
     for row in range(8):
         for col in range(8):
             square = gamestate.board[row][col]
@@ -349,7 +396,7 @@ def score_board(gamestate):
                             if [new_row, new_col] not in black_squares_controlled and is_inside_board(new_row, new_col):
                                 black_squares_controlled.append([new_row, new_col])
                 elif abs(square) == 2 or abs(square) == 5 or abs(square) == 4:
-                    directions = piece_directions[square[1]]
+                    directions = piece_directions[abs(square)]
                     for direction in directions:
                         for rad in range(1, 8):
                             new_row = row + direction[0] * rad
@@ -357,31 +404,32 @@ def score_board(gamestate):
                             if is_inside_board(new_row, new_col):
                                 if white:
                                     if [new_row, new_col] not in white_squares_controlled:
-                                        if gamestate.board[new_row][new_col] == '--':  # empty square
+                                        if gamestate.board[new_row][new_col] == 0:  # empty square
                                             white_squares_controlled.append([new_row, new_col])
-                                        elif gamestate.board[new_row][new_col] != '--':  # a piece blocking larger radius so break
+                                        elif gamestate.board[new_row][new_col] != 0:  # a piece blocking larger radius so break
                                             white_squares_controlled.append([new_row, new_col])
                                             break
                                 else:
                                     if [new_row, new_col] not in black_squares_controlled:
-                                        if gamestate.board[new_row][new_col] == '--':  # empty square
+                                        if gamestate.board[new_row][new_col] == 0:  # empty square
                                             black_squares_controlled.append([new_row, new_col])
-                                        elif gamestate.board[new_row][new_col] != '--':  # a piece blocking larger radius so break
+                                        elif gamestate.board[new_row][new_col] != 0:  # a piece blocking larger radius so break
                                             black_squares_controlled.append([new_row, new_col])
                                             break
                             else:  # not inside board so no point checking larger radius
                                 break
-                elif square[1] == 'n':
+                elif abs(square) == 3:  # knight
                     directions = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [-1, 2], [1, -2], [-1, -2]]
                     for direction in directions:
                         new_row = row + direction[0]
                         new_col = col + direction[1]
-                        if white:
-                            if [new_row, new_col] not in white_squares_controlled and is_inside_board(new_row, new_col):
-                                white_squares_controlled.append([new_row, new_col])
-                        else:
-                            if [new_row, new_col] not in black_squares_controlled and is_inside_board(new_row, new_col):
-                                black_squares_controlled.append([new_row, new_col])
+                        if 0 <= new_row < 8 and 0 <= new_col < 8:
+                            if white:
+                                if [new_row, new_col] not in white_squares_controlled:
+                                    white_squares_controlled.append([new_row, new_col])
+                            else:
+                                if [new_row, new_col] not in black_squares_controlled:
+                                    black_squares_controlled.append([new_row, new_col])
     white_control_points = 0
     black_control_points = 0
     for row in range(8):
@@ -401,7 +449,7 @@ def evaluate_endgame(board):
     pieces = 0
     for row in range(8):
         for col in range(8):
-            if board[row][col] != '--' and board[row][col][1] != 'p':
+            if board[row][col] != 0 and abs(board[row][col]) != 1:
                 pieces += 1
     if pieces > 4:
         return False
@@ -418,9 +466,9 @@ def score_material(board):
     score = 0
     for row in range(8):
         for col in range(8):
-            if board[row][col][0] == 'w':
+            if board[row][col] > 0:
                 score += piece_values[board[row][col][1]]
-            elif board[row][col][0] == 'b':
+            elif board[row][col] < 0:
                 score -= piece_values[board[row][col][1]]
     return score
 

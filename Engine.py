@@ -1,6 +1,7 @@
 """
 Contains game logic and AI
 """
+import random
 
 from win32api import GetSystemMetrics
 
@@ -32,7 +33,6 @@ class GameState:
         ]
         self.legal_moves = []
         self.move_log = []
-        self.notation_log = []
         self.white_to_move = True
         self.white_king = (7, 4)
         self.black_king = (0, 4)
@@ -48,6 +48,8 @@ class GameState:
         self.draw = False
         self.promote_to = 5 if self.white_to_move else -5
         self.boardstates_log = []
+        self.states_depth_log = []
+        self.eval_log = []
 
     """
     MOVE
@@ -57,7 +59,6 @@ class GameState:
         self.board[move.start_row][move.start_col] = 0
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.move_log.append(move)
-        self.notation_log.append(move.get_notation())
         self.white_to_move = not self.white_to_move
         # update the king location
         if move.piece_moved == 6:
@@ -67,9 +68,7 @@ class GameState:
 
         # pawn promotion
         if move.is_pawn_promotion:
-            self.board[move.end_row][move.end_col] = move.piece_moved[0] + move.promote_to
-            self.notation_log.pop()
-            self.notation_log.append(move.get_notation() + '=' + move.promote_to.upper())
+            self.board[move.end_row][move.end_col] = move.promote_to
 
         # update en passant possible variable
         if abs(move.piece_moved) == 1 and abs(move.start_row - move.end_row) == 2:  # only on two square pawn advances
@@ -85,26 +84,16 @@ class GameState:
             if move.end_col - move.start_col == 2:  # king moved to kingside
                 self.board[move.end_row][move.end_col - 1] = self.board[move.end_row][move.end_col + 1]  # copy rook
                 self.board[move.end_row][move.end_col + 1] = 0  # erase rook
-                self.notation_log.pop()
-                self.notation_log.append("O-O")
             else:  # queenside castle
                 self.board[move.end_row][move.end_col + 1] = self.board[move.end_row][move.end_col - 2]  # copy rook
                 self.board[move.end_row][move.end_col - 2] = 0  # erase rook
-                self.notation_log.pop()
-                self.notation_log.append("O-O-O")
 
         # update whenever rook or king moves
         self.update_castle_rights(move)
         self.castle_rights_log.append((CastleRights(self.castle_rights.wks, self.castle_rights.bks,
                                                self.castle_rights.wqs, self.castle_rights.bqs)))
 
-        # check and checkmate notation
-        king_row, king_col = self.white_king if self.white_to_move else self.black_king
-        ally = 1 if self.white_to_move else -1  # if piece * ally > 0  : ally = True
-        if self.get_square_under_attack(king_row, king_col, ally):
-            temp = self.notation_log.pop()
-            self.notation_log.append(temp + '+')
-
+        # store board state
         self.boardstates_log.append(self.get_boardstate())
 
     def update_castle_rights(self, move):
@@ -144,7 +133,6 @@ class GameState:
         if self.move_log:
             move = self.move_log.pop()
             self.boardstates_log.pop()
-            self.notation_log.pop()
             self.board[move.start_row][move.start_col] = move.piece_moved
             self.board[move.end_row][move.end_col] = move.piece_captured
             self.white_to_move = not self.white_to_move
@@ -384,7 +372,7 @@ class GameState:
             if not piece_pinned or pin_direction == (direction, 0):
                 if r + direction == 0 or r + direction == 7:  # promotion
                     for i in promotions:
-                        moves.append(Move((r, c), (r + direction, c), self.board), promote_to=i * ally)  # adding all different promotions for engine to calculate
+                        moves.append(Move((r, c), (r + direction, c), self.board, promote_to=i * ally))  # adding all different promotions for engine to calculate
                 else:
                     moves.append(Move((r, c), (r + direction, c), self.board))
                 if r == origin_row and self.board[r + 2 * direction][c] == 0:  # 2 square advance
@@ -397,7 +385,7 @@ class GameState:
                     if not piece_pinned or pin_direction == (d[0], d[1]):
                         if r + d[0] == 0 or r + d[0] == 7:  # capture and promotion
                             for i in promotions:
-                                moves.append(Move((r, c), (r + d[0], new_c), self.board), promote_to=i * ally)  # adding all different promotions for engine to calculate
+                                moves.append(Move((r, c), (r + d[0], new_c), self.board, promote_to=i * ally))  # adding all different promotions for engine to calculate
                         else:  # normal capture
                             moves.append(Move((r, c), (r + d[0], new_c), self.board))
                 elif (r + d[0], new_c) == self.en_passant_possible:
@@ -606,7 +594,7 @@ class GameState:
             self.draw = True
             return
 
-    def openings(self):
+    def get_opening(self):
         moves = []
         if not self.move_log:  # white first
             # first, two square pawn push
@@ -628,7 +616,7 @@ class GameState:
                 # knight moves
                 moves.append(Move((0, 1), (2, 2), self.board))
                 moves.append(Move((0, 6), (2, 5), self.board))
-        return moves
+        return moves[random.randint(0, len(moves) - 1)]
 
     def get_boardstate(self):
         board_string = ''

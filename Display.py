@@ -14,7 +14,7 @@ from win32api import GetSystemMetrics
 
 WIDTH = GetSystemMetrics(0)
 HEIGHT = GetSystemMetrics(1)
-BOARDGAP = HEIGHT // 10
+BOARDGAP = HEIGHT // 8
 SQ_SIZE = (HEIGHT - 2 * BOARDGAP) // 8
 IMAGES = {}
 
@@ -114,7 +114,7 @@ def display_move_log(screen, gamestate):
         font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
         row_height = SQ_SIZE // 3
         possible_amount_of_moves_displayed = box_height // row_height
-        if move_nr >= possible_amount_of_moves_displayed:  # cut the moves
+        if move_nr > possible_amount_of_moves_displayed:  # cut the moves
             for i in range(1 + (move_nr - possible_amount_of_moves_displayed), move_nr + 1):
                 text = font.render(str(i), True, black)
                 textRect = text.get_rect()
@@ -122,8 +122,8 @@ def display_move_log(screen, gamestate):
                 screen.blit(text, textRect)
 
                 # moves
-                white_move = gamestate.notation_log[i * 2 - 2]
-                black_move = gamestate.notation_log[i * 2 - 1]
+                white_move = gamestate.move_log[i * 2 - 2].get_notation()
+                black_move = gamestate.move_log[i * 2 - 1].get_notation()
                 white_text = font.render(white_move, False, black)
                 black_text = font.render(black_move, False, black)
                 white_text_Rect = white_text.get_rect()
@@ -140,8 +140,8 @@ def display_move_log(screen, gamestate):
                 screen.blit(text, textRect)
 
                 # moves
-                white_move = gamestate.notation_log[i * 2 - 2]
-                black_move = gamestate.notation_log[i * 2 - 1]
+                white_move = gamestate.move_log[i * 2 - 2].get_notation()
+                black_move = gamestate.move_log[i * 2 - 1].get_notation()
                 white_text = font.render(white_move, False, black)
                 black_text = font.render(black_move, False, black)
                 white_text_Rect = white_text.get_rect()
@@ -192,3 +192,19 @@ def display_reset_button(screen):
     textRect.center = (box_pos[0] + box_size[0] // 2, box_pos[1] + box_size[1] // 2)
     screen.blit(text, textRect)
 
+
+def display_eval_bar(screen, gamestate):
+    # draw from black perspective, aka background is white
+    gap = 4
+    total = SQ_SIZE * 8
+    # black border
+    p.draw.rect(screen, p.Color("black"), p.Rect(BOARDGAP // 2 - gap, BOARDGAP - gap, SQ_SIZE // 2 + 2 * gap, total + 2 * gap))
+    # white background
+    p.draw.rect(screen, p.Color("white"), p.Rect(BOARDGAP // 2, BOARDGAP, SQ_SIZE // 2, total))
+    # black eval
+    max_eval = 10  # total eval range both directions => 20
+    pixels_per_eval = total // (max_eval * 2)
+    eval = max_eval - gamestate.eval_log[-1]
+    p.draw.rect(screen, p.Color("black"), p.Rect(BOARDGAP // 2, BOARDGAP, SQ_SIZE // 2, eval * pixels_per_eval))
+    # draw middlepoint
+    p.draw.rect(screen, p.Color("gold"), p.Rect(BOARDGAP // 2, HEIGHT // 2, SQ_SIZE // 2, SQ_SIZE // 10))

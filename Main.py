@@ -18,6 +18,7 @@ def main():
     screen.fill(p.Color("Gray"))
     gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
     gamestate.get_boardstate()
+    gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
     clock = p.time.Clock()
     sq_selected = ()
     mouse_clicks = []
@@ -26,8 +27,8 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = True
-    black_human = True
+    white_human = False
+    black_human = False
     AI_thinking = False
     move_finder_process = None
     flag = True
@@ -41,6 +42,8 @@ def main():
                     gamestate.undo_move()
                     move_made = True  # will call get_legal moves later
                     game_over = False
+                    if gamestate.eval_log:
+                        gamestate.eval_log.pop()
                 if e.key == p.K_n:
                     gamestate.promote_to = 3 if gamestate.white_to_move else -3
                 if e.key == p.K_b:
@@ -76,6 +79,7 @@ def main():
                                 if move == legal_moves[i]:
                                     move = legal_moves[i]
                                     gamestate.make_move(move)
+                                    gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
                                     # play_sound('move_piece', 0.5)
                                     move_made = True
                                     sq_selected = ()  # reset clicks
@@ -116,6 +120,7 @@ def main():
                             if move == legal_moves[i]:
                                 move = legal_moves[i]
                                 gamestate.make_move(move)
+                                gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
                                 # play_sound('move_piece', 0.5)
                                 move_made = True
                                 sq_selected = ()  # reset clicks
@@ -136,12 +141,13 @@ def main():
             if not move_finder_process.is_alive():
                 print("done thinking")
                 (AI_move, board_states_depth) = return_queue.get()
-                gamestate.boardstates_log.append(board_states_depth)
+                gamestate.states_depth_log.append(board_states_depth)
                 if AI_move is None:
                     AI_move = SmartMoveFinder.find_random_move(legal_moves)
                 gamestate.make_move(AI_move)
+                gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
                 # play_sound('move_piece', 0.5)
-                print("Played move: " + gamestate.notation_log[-1])
+                print("Played move: " + AI_move.get_notation())
                 move_made = True
                 AI_thinking = False
 
@@ -150,6 +156,11 @@ def main():
             gamestate.get_draw()
 
         Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos())
+
+        # eval bar for bots
+
+        if not white_human and not black_human:
+            Display.display_eval_bar(screen, gamestate)
 
         # Checkmate and draw
         if gamestate.checkmate:
