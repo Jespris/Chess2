@@ -61,7 +61,7 @@ def main():
                             mouse_clicks = []
                         else:
                             if sq_selected:
-                                if gamestate.board[sq_selected[0]][sq_selected[1]][0] == gamestate.board[row][col][0]:  #clicked same color piece
+                                if gamestate.board[row][col] and gamestate.board[sq_selected[0]][sq_selected[1]] / gamestate.board[row][col] > 0:  #clicked same color piece
                                     sq_selected = (row, col)
                                     mouse_clicks = [sq_selected]
                                 else:
@@ -100,7 +100,7 @@ def main():
                         mouse_clicks = [sq_selected]
                     else:
                         if sq_selected:
-                            if gamestate.board[sq_selected[0]][sq_selected[1]][0] == gamestate.board[row][col][0]:  # clicked same color piece
+                            if gamestate.board[row][col] and gamestate.board[sq_selected[0]][sq_selected[1]] / gamestate.board[row][col] > 0:  # clicked same color piece
                                 sq_selected = ()  # clear selection
                                 mouse_clicks = []
                             else:

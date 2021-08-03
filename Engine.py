@@ -268,7 +268,7 @@ class GameState:
                             possible_pin = (new_row, new_col, card_dir[d][0], card_dir[d][1])
                         else:  # 2nd or later allied piece in this direction, so no pin possible
                             break
-                    elif end_piece * enemy < 0:
+                    elif end_piece * enemy > 0:
                         piece_type = abs(end_piece)
                         """
                         5 possibilities in this complex conditional:
@@ -300,7 +300,7 @@ class GameState:
             new_col = start_col + n[1]
             if 0 <= new_row < 8 and 0 <= new_col < 8:  # inside board
                 end_piece = self.board[new_row][new_col]
-                if end_piece * enemy < 0 and abs(end_piece) == 3:  # enemy knight attacking king
+                if end_piece * enemy > 0 and abs(end_piece) == 3:  # enemy knight attacking king
                     in_check = True
                     checks.append((new_row, new_col, n[0], n[1]))
         return in_check, pins, checks
@@ -333,9 +333,9 @@ class GameState:
                 new_r = r + d[0] * i
                 new_c = c + d[1] * i
                 if 0 <= new_r < 8 and 0 <= new_c < 8:  # inside board
-                    if self.board[new_r][new_c][0] * ally > 0:  # piece blocking attack
+                    if self.board[new_r][new_c] * ally > 0:  # piece blocking attack
                         break
-                    if self.board[new_r][new_c] * enemy < 0:
+                    if self.board[new_r][new_c] * enemy > 0:
                         if abs(self.board[new_r][new_c]) == 4 or abs(self.board[new_r][new_c]) == 6:
                             return True
                         if abs(self.board[new_r][new_c]) == 1 and i == 1:
@@ -393,12 +393,12 @@ class GameState:
         for d in capture_directions:
             new_c = c + d[1]
             if 0 <= new_c < 8:  # inside board
-                if self.board[r + d[0]][new_c] * enemy < 0:
+                if self.board[r + d[0]][new_c] * enemy > 0:
                     if not piece_pinned or pin_direction == (d[0], d[1]):
-                        if r +  d[0] == 0 or r + d[0] == 7:  # capture and promotion
+                        if r + d[0] == 0 or r + d[0] == 7:  # capture and promotion
                             for i in promotions:
                                 moves.append(Move((r, c), (r + d[0], new_c), self.board), promote_to=i * ally)  # adding all different promotions for engine to calculate
-                        else:
+                        else:  # normal capture
                             moves.append(Move((r, c), (r + d[0], new_c), self.board))
                 elif (r + d[0], new_c) == self.en_passant_possible:
                     # check if the same king is on same rank as pawn initially
@@ -444,7 +444,7 @@ class GameState:
                     if self.board[new_r][new_c] == 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
-                    elif self.board[new_r][new_c] * enemy < 0:
+                    elif self.board[new_r][new_c] * enemy > 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
                         break
@@ -472,7 +472,7 @@ class GameState:
                     if self.board[new_r][new_c] == 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
-                    elif self.board[new_r][new_c] * enemy < 0:
+                    elif self.board[new_r][new_c] * enemy > 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
                         break
@@ -497,7 +497,7 @@ class GameState:
                 if not piece_pinned:
                     if self.board[new_r][new_c] == 0:
                         moves.append(Move((r, c), (new_r, new_c), self.board))
-                    elif self.board[new_r][new_c][0] * enemy < 0:
+                    elif self.board[new_r][new_c] * enemy > 0:
                         moves.append(Move((r, c), (new_r, new_c), self.board))
 
     def get_queen_moves(self, r, c, moves):
@@ -521,7 +521,7 @@ class GameState:
                     if self.board[new_r][new_c] == 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
-                    elif self.board[new_r][new_c] * enemy < 0:
+                    elif self.board[new_r][new_c] * enemy > 0:
                         if not piece_pinned or pin_direction == d:
                             moves.append(Move((r, c), (new_r, new_c), self.board))
                         break
@@ -537,7 +537,7 @@ class GameState:
             new_c = c + col_moves[i]
             if 0 <= new_r < 8 and 0 <= new_c < 8:  # new square is inside board
                 end_piece = self.board[new_r][new_c]
-                if end_piece // abs(end_piece) != ally:  # not an ally piece, empty or enemy
+                if end_piece * ally <= 0:  # not an ally piece, empty or enemy
                     if ally == 1:
                         self.white_king = (new_r, new_c)
                     else:
@@ -634,9 +634,10 @@ class GameState:
         board_string = ''
         for row in range(8):
             for col in range(8):
-                board_string += self.board[row][col]
+                board_string += str(self.board[row][col])
         board_state = (board_string, self.castle_rights_log[-1].castles_ID, self.en_passant_possible, self.white_to_move)
         return board_state
+
 
 class CastleRights:  # for storing the info about castling rights
     def __init__(self, wks, bks, wqs, bqs):
@@ -702,7 +703,7 @@ class Move:
                 return '0-0'
             else:  # queenside
                 return '0-0-0'
-        piece = '' if abs(self.piece_moved) == 1 else int_to_string[abs(self.piece_moved)].upper()
+        piece = '' if abs(self.piece_moved) == 1 else int_to_string[abs(self.piece_moved)][1].upper()
         captures = 'x' if self.piece_captured != 0 else ''
         if piece == '' and captures:  # pawn captures
             piece = self.cols_to_files[self.start_col]

@@ -104,15 +104,15 @@ black_square_control = [[1, 1, 1, 1, 1, 1, 1, 1],
                         [3, 4, 4, 4, 4, 4, 4, 3],
                         [4, 4, 4, 4, 4, 4, 4, 4]]
 
-piece_position_scores = {'n': knight_scores, 'k': opening_king_scores if not ENDGAME else endgame_king_scores,
-                         'q': queen_scores, 'r': rook_scores, 'b': bishop_scores, 'wp': white_pawn_scores,
-                         'bp': black_pawn_scores}
+piece_position_scores = {3: knight_scores, 6: opening_king_scores if not ENDGAME else endgame_king_scores,
+                         5: queen_scores, 2: rook_scores, 4: bishop_scores, 1: white_pawn_scores,
+                         -1: black_pawn_scores}
 
 rook_directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 bishop_directions = [[1, 1], [1, -1], [-1, -1], [-1, 1]]
 queen_directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]]
 
-piece_directions = {'r': rook_directions, 'b': bishop_directions, 'q': queen_directions}
+piece_directions = {2: rook_directions, 4: bishop_directions, 5: queen_directions}
 
 
 def find_random_move(legal_moves):
@@ -187,7 +187,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
     else:
         actual_depth = 4
 
-    find_move_nega_max_alpha_beta(gamestate, good_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+    find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
 
     print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
     print(gamestate.boardstates_log)
@@ -317,17 +317,17 @@ def score_board(gamestate):
     for row in range(8):
         for col in range(8):
             square = gamestate.board[row][col]
-            if square != '--':  # not blank
+            if square != 0:  # not blank
                 white = False
-                if square != 'wp' and square != 'bp':
-                    piece_score = piece_position_scores[square[1]][row][col] / weights_impact
+                if square != 1 and square != -1:
+                    piece_score = piece_position_scores[abs(square)][row][col] / weights_impact
                 else:
                     piece_score = piece_position_scores[square][row][col] / weights_impact
-                if square[0] == 'w':
+                if square > 0:
                     white = True
-                score += piece_values[square[1]] + piece_score if white else -(piece_values[square[1]] + piece_score)
+                score += piece_values[abs(square)] + piece_score if white else -(piece_values[abs(square)] + piece_score)
                 # check if the squares controlled by this piece are in the squares controlled list, if not, append
-                if square[1] == 'p':
+                if abs(square) == 1:  # pawn
                     directions = [-1, 1]
                     for direction in directions:
                         control_square = [row - 1, col + direction] if white else [row + 1, col + direction]
@@ -337,7 +337,7 @@ def score_board(gamestate):
                         else:
                             if [row - 1, col + direction] not in black_squares_controlled and is_inside_board(control_square[0], control_square[1]):
                                 black_squares_controlled.append(control_square)
-                elif square[1] == 'k':
+                elif abs(square) == 6:  # king
                     directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]
                     for direction in directions:
                         new_row = row + direction[0]
@@ -348,7 +348,7 @@ def score_board(gamestate):
                         else:
                             if [new_row, new_col] not in black_squares_controlled and is_inside_board(new_row, new_col):
                                 black_squares_controlled.append([new_row, new_col])
-                elif square[1] == 'r' or square[1] == 'q' or square[1] == 'b':
+                elif abs(square) == 2 or abs(square) == 5 or abs(square) == 4:
                     directions = piece_directions[square[1]]
                     for direction in directions:
                         for rad in range(1, 8):
