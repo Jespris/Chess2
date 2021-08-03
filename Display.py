@@ -20,9 +20,9 @@ IMAGES = {}
 
 
 def load_images():
-    pieces = ['wp', 'bp', 'wr', 'br', 'wb', 'bb', 'wn', 'bn', 'bq', 'wq', 'bk', 'wk']
+    pieces = [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6]
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load('images/' + piece + '.png'), (SQ_SIZE, SQ_SIZE))
+        IMAGES[piece] = p.transform.scale(p.image.load('images/' + str(piece) + '.png'), (SQ_SIZE, SQ_SIZE))
 
 
 def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, mouse_pos):
@@ -68,14 +68,14 @@ def display_pieces(screen, gamestate, sq_selected, mouse_down):
     for row in range(8):
         for col in range(8):
             piece = gamestate.board[row][col]
-            if piece != '--' and not (sq_selected == (row, col) and mouse_down):
+            if piece != 0 and not (sq_selected == (row, col) and mouse_down):
                 screen.blit(IMAGES[piece], (BOARDGAP + col * SQ_SIZE, BOARDGAP + row * SQ_SIZE))
 
 
 def display_drag_move(screen, gamestate, square_selected, mouse_down, mouse_pos):
     if square_selected and mouse_down:
         piece = gamestate.board[square_selected[0]][square_selected[1]]
-        if piece != '--':
+        if piece != 0:
             screen.blit(IMAGES[piece], (mouse_pos[0] - SQ_SIZE // 2, mouse_pos[1] - SQ_SIZE // 2))
 
 

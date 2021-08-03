@@ -119,7 +119,7 @@ def find_random_move(legal_moves):
     return legal_moves[r.randint(0, len(legal_moves) - 1)]
 
 
-def find_best_move(gamestate, legal_moves, return_queue):
+def find_best_move_candidate_version(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies, candidate_moves
     next_move = None
     if len(legal_moves) == 1:
@@ -168,6 +168,32 @@ def find_best_move(gamestate, legal_moves, return_queue):
     return_queue.put((next_move, (counter, actual_depth)))
 
 
+def find_best_move(gamestate, legal_moves, return_queue):
+    global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
+    next_move = None
+    if len(legal_moves) == 1:
+        next_move = legal_moves[0]
+    counter = 0
+    board_state_copies = 0
+    performance = CPU_PERFORMANCE * 1000
+    if len(gamestate.boardstates_log) > 3:
+        actual_depth = gamestate.boardstates_log[-1][1]
+        if gamestate.boardstates_log[-1][0] < performance and gamestate.boardstates_log[-2][0] < performance:  # too low depth
+            actual_depth += 1
+            print("Increased depth!")
+        elif gamestate.boardstates_log[-1][0] > performance * 5 and gamestate.boardstates_log[-2][0] > performance * 5:  # too high depth
+            actual_depth -= 1
+            print("Decreased depth!")
+    else:
+        actual_depth = 4
+
+    find_move_nega_max_alpha_beta(gamestate, good_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+
+    print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
+    print(gamestate.boardstates_log)
+    return_queue.put((next_move, (counter, actual_depth)))
+
+
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     if depth == 0:
@@ -180,7 +206,7 @@ def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, tu
         if not ENDGAME and len(gamestate.move_log) > 50:
             ENDGAME = evaluate_endgame(gamestate.board)
         next_moves = gamestate.get_legal_moves()
-        board_state = gamestate.get_boardstate()
+        board_state = gamestate.boardstates_log[-1]
         if board_state not in BOARD_HASH:
             # print("New board state")
             score = -find_move_nega_max_alpha_beta(gamestate, next_moves, depth - 1, -beta, -alpha, -turn_mult, actual_depth)

@@ -26,8 +26,8 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
-    black_human = False
+    white_human = True
+    black_human = True
     AI_thinking = False
     move_finder_process = None
     flag = True
@@ -42,13 +42,13 @@ def main():
                     move_made = True  # will call get_legal moves later
                     game_over = False
                 if e.key == p.K_n:
-                    gamestate.promote_to = 'n'
+                    gamestate.promote_to = 3 if gamestate.white_to_move else -3
                 if e.key == p.K_b:
-                    gamestate.promote_to = 'b'
+                    gamestate.promote_to = 4 if gamestate.white_to_move else -4
                 if e.key == p.K_r:
-                    gamestate.promote_to = 'r'
+                    gamestate.promote_to = 2 if gamestate.white_to_move else -2
             if e.type == p.KEYUP:
-                gamestate.promote_to = 'q'
+                gamestate.promote_to = 5 if gamestate.white_to_move else -5
             if e.type == p.MOUSEBUTTONDOWN:
                 mouse_down = True
                 mouse_pos = p.mouse.get_pos()

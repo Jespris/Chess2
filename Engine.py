@@ -20,16 +20,6 @@ class GameState:
         # TODO: change all pieces to integers for faster calculation
         # white - positive, black - negative
         # empty = 0, pawn = 1, rook = 2, knight = 3, bishop = 4, queen = 5, king = 6
-        """self.board = [
-            ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
-            ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['--', '--', '--', '--', '--', '--', '--', '--'],
-            ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
-            ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr']
-        ]"""
         self.board = [
             [-2,-3,-4,-5,-6,-4,-3,-2],
             [-1,-1,-1,-1,-1,-1,-1,-1],
@@ -77,9 +67,9 @@ class GameState:
 
         # pawn promotion
         if move.is_pawn_promotion:
-            self.board[move.end_row][move.end_col] = move.piece_moved[0] + self.promote_to
+            self.board[move.end_row][move.end_col] = move.piece_moved[0] + move.promote_to
             self.notation_log.pop()
-            self.notation_log.append(move.get_notation() + '=' + self.promote_to.upper())
+            self.notation_log.append(move.get_notation() + '=' + move.promote_to.upper())
 
         # update en passant possible variable
         if abs(move.piece_moved) == 1 and abs(move.start_row - move.end_row) == 2:  # only on two square pawn advances
@@ -114,6 +104,8 @@ class GameState:
         if self.get_square_under_attack(king_row, king_col, ally):
             temp = self.notation_log.pop()
             self.notation_log.append(temp + '+')
+
+        self.boardstates_log.append(self.get_boardstate())
 
     def update_castle_rights(self, move):
         if move.piece_moved == 6:  # king
@@ -386,9 +378,15 @@ class GameState:
         direction = -1 if self.white_to_move else 1  # sets pawn direction
         origin_row = 1 if not self.white_to_move else 6
         enemy = -1 if self.white_to_move else 1
+        ally = 1 if self.white_to_move else -1
+        promotions = [5, 4, 3, 2]
         if self.board[r + direction][c] == 0:  # 1 square pawn advance,
             if not piece_pinned or pin_direction == (direction, 0):
-                moves.append(Move((r, c), (r + direction, c), self.board))
+                if r + direction == 0 or r + direction == 7:  # promotion
+                    for i in promotions:
+                        moves.append(Move((r, c), (r + direction, c), self.board), promote_to=i * ally)  # adding all different promotions for engine to calculate
+                else:
+                    moves.append(Move((r, c), (r + direction, c), self.board))
                 if r == origin_row and self.board[r + 2 * direction][c] == 0:  # 2 square advance
                     moves.append(Move((r, c), (r + 2 * direction, c), self.board))
         capture_directions = [[direction, 1], [direction, -1]]
@@ -397,7 +395,11 @@ class GameState:
             if 0 <= new_c < 8:  # inside board
                 if self.board[r + d[0]][new_c] * enemy < 0:
                     if not piece_pinned or pin_direction == (d[0], d[1]):
-                        moves.append(Move((r, c), (r + d[0], new_c), self.board))
+                        if r +  d[0] == 0 or r + d[0] == 7:  # capture and promotion
+                            for i in promotions:
+                                moves.append(Move((r, c), (r + d[0], new_c), self.board), promote_to=i * ally)  # adding all different promotions for engine to calculate
+                        else:
+                            moves.append(Move((r, c), (r + d[0], new_c), self.board))
                 elif (r + d[0], new_c) == self.en_passant_possible:
                     # check if the same king is on same rank as pawn initially
                     king_row, king_col = self.white_king if self.white_to_move else self.black_king
@@ -663,7 +665,7 @@ class Move:
     files_to_cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
     cols_to_files = {v: k for k, v in files_to_cols.items()}
 
-    def __init__(self, start_sq, end_sq, board, en_passant_possible=False, is_castle_move=False, promote_to=''):
+    def __init__(self, start_sq, end_sq, board, en_passant_possible=False, is_castle_move=False, promote_to=0):
         self.start_row = start_sq[0]
         self.start_col = start_sq[1]
         self.end_row = end_sq[0]
@@ -704,7 +706,7 @@ class Move:
         captures = 'x' if self.piece_captured != 0 else ''
         if piece == '' and captures:  # pawn captures
             piece = self.cols_to_files[self.start_col]
-        promotion = '' if not self.is_pawn_promotion else '=' + self.promote_to
+        promotion = '' if not self.is_pawn_promotion else '=' + int_to_string[self.promote_to].upper()
         return piece + captures + self.get_rank_file(self.end_row, self.end_col) + promotion
 
     def get_rank_file(self, r, c):
