@@ -25,7 +25,7 @@ def load_images():
         IMAGES[piece] = p.transform.scale(p.image.load('images/' + str(piece) + '.png'), (SQ_SIZE, SQ_SIZE))
 
 
-def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, mouse_pos):
+def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, mouse_pos, eval):
     p.draw.rect(screen, p.Color("gray"), p.Rect(0, 0, WIDTH, HEIGHT))
     display_squares(screen)
     display_last_move(screen, gamestate)
@@ -34,7 +34,10 @@ def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, m
     display_drag_move(screen, gamestate, square_selected, mouse_down, mouse_pos)
     display_pieces(screen, gamestate, square_selected, mouse_down)
     display_coordinates(screen)
-    display_move_log(screen, gamestate)
+    # eval bar
+    if eval:
+        display_eval_bar(screen, gamestate)
+    display_move_log(screen, gamestate, eval)
     display_reset_button(screen)
 
 
@@ -103,7 +106,7 @@ def display_coordinates(screen):
         screen.blit(file_text, file_text_rect)
 
 
-def display_move_log(screen, gamestate):
+def display_move_log(screen, gamestate, eval):
     box_pos = [BOARDGAP + 9 * SQ_SIZE, BOARDGAP]  # upper left corner
     box_width = 4 * SQ_SIZE
     box_height = 8 * SQ_SIZE
@@ -122,15 +125,19 @@ def display_move_log(screen, gamestate):
                 screen.blit(text, textRect)
 
                 # moves
-                white_move = gamestate.move_log[i * 2 - 2].get_notation()
-                black_move = gamestate.move_log[i * 2 - 1].get_notation()
+                if eval:
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 2], 1))
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                else:
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation()
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation()
                 white_text = font.render(white_move, False, black)
                 black_text = font.render(black_move, False, black)
                 white_text_Rect = white_text.get_rect()
                 white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
                 screen.blit(white_text, white_text_Rect)
                 black_text_Rect = black_text.get_rect()
-                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + 2 * SQ_SIZE, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
+                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + int(2.5 * SQ_SIZE), box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
                 screen.blit(black_text, black_text_Rect)
         else:  # display from beginning
             for i in range(1, move_nr + 1):
@@ -140,15 +147,19 @@ def display_move_log(screen, gamestate):
                 screen.blit(text, textRect)
 
                 # moves
-                white_move = gamestate.move_log[i * 2 - 2].get_notation()
-                black_move = gamestate.move_log[i * 2 - 1].get_notation()
+                if eval:
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 2], 1))
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                else:
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation()
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation()
                 white_text = font.render(white_move, False, black)
                 black_text = font.render(black_move, False, black)
                 white_text_Rect = white_text.get_rect()
                 white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + i * row_height)
                 screen.blit(white_text, white_text_Rect)
                 black_text_Rect = black_text.get_rect()
-                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + 2 * SQ_SIZE, box_pos[1] + i * row_height)
+                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + int(2.5 * SQ_SIZE), box_pos[1] + i * row_height)
                 screen.blit(black_text, black_text_Rect)
 
 

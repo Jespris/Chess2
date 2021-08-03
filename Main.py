@@ -27,7 +27,7 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
+    white_human = True
     black_human = False
     AI_thinking = False
     move_finder_process = None
@@ -155,12 +155,7 @@ def main():
             legal_moves = gamestate.get_legal_moves()
             gamestate.get_draw()
 
-        Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos())
-
-        # eval bar for bots
-
-        if not white_human and not black_human:
-            Display.display_eval_bar(screen, gamestate)
+        Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos(), (not white_human and not black_human))
 
         # Checkmate and draw
         if gamestate.checkmate:
