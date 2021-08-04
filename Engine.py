@@ -33,6 +33,8 @@ class GameState:
         ]
         self.legal_moves = []
         self.move_log = []
+        self.opening = ''
+        self.material_balance = 0  # negative = black is up material
         self.white_to_move = True
         self.white_king = (7, 4)
         self.black_king = (0, 4)
@@ -596,7 +598,7 @@ class GameState:
 
     def get_opening(self):
         next_move = None
-        if self.move_log:
+        if len(self.move_log) > 1:
             candidate_moves = []
             moves_so_far = []
             for move in self.move_log:
@@ -619,11 +621,51 @@ class GameState:
                             'f4': 'exf4',
                             'exf4': 'Nf3',
                             'Nf3': ('g5', 'd5', 'd6')}
-            reti = {'Nf3': 'Nf6',
-                    'Nf6': 'g3',
-                    'g3': 'g6'}
+            reti_main =     {'Nf3': 'Nf6',
+                            'Nf6': 'g3',
+                            'g3': ('g6', 'd5')}
+            reti_side = {'Nf6': 'd5',
+                         'd5': ('d4', 'g3', 'c4', 'b3', 'e3')}
+            queens_gambit = {'d4': 'd5',
+                             'd5': 'c4',
+                             'c4': ('c6', 'e6', 'dxc4')}
+            english = {'c4': 'c5',
+                       'c5': 'Nf3',
+                       'Nf3': 'Nf6',
+                       'Nf6': 'Nc3',
+                       'Nc3': ('g3', 'd4', 'e3')}
+            kings_english = {'c4': 'e5',
+                             'e5': ('Nc3', 'g3', 'e3')}
+            modern_defence = {'e4': 'g6',
+                              'g6': 'd4',
+                              'd4': 'Bg7',
+                              'Bg7': ('Nc3', 'Nf6', 'c4')}
+            dutch = {'d4': 'f5',
+                     'f5': 'g3',
+                     'g3': 'Nf6',
+                     'Nf6': 'Bg2',
+                     'Bg2': 'g6',
+                     'g6': ('Nf3', 'c3', 'c4', 'Nd2')}
+            sicilian = {'e4': 'c5',
+                        'c5': 'Nf3',
+                        'Nf3': ('Nc6', 'd6', 'e6', 'g6')}
+            scandinavian = {'e4': 'd5',
+                            'd5': 'exd5',
+                            'exd5': 'Qxd5',
+                            'Qxd5': 'Nc3',
+                            'Nc3': 'Qa5',
+                            'Qa5': ('d4', 'Bc4', 'Nf3', 'g3')}
 
-            openings = [ruy_lopez]
+            openings = [ruy_lopez, french_defence, caro_kann, kings_gambit, reti_main, queens_gambit, english,
+                        modern_defence, dutch, sicilian, scandinavian, reti_side, kings_english]
+            openings_to_opening = [(ruy_lopez, 'Ruy Lopez Opening'), (french_defence, "French Defence"),
+                                   (caro_kann, "Caro-Kann Defence"), (kings_gambit,"King's Gambit"),
+                                   (reti_main, "Réti Opening: King's Indian Attack"), (reti_side, "Réti Opening"),
+                                   (queens_gambit, "Queen's Gambit"), (english, "English Opening: Symmetrical Variation"),
+                                   (kings_english, "English Opening: King's English Variation"),
+                                   (modern_defence, "Modern Defence"), (dutch, "Dutch Defence"),
+                                   (sicilian, "Sicilian Defence"), (scandinavian, "Scandinavian Defence")]
+            random.shuffle(openings)
             for opening in openings:
                 next_move_in_line = self.get_next_opening_line_move(opening, moves_so_far)
                 if next_move_in_line:
@@ -632,20 +674,52 @@ class GameState:
                             candidate_moves.append(move)
                     else:
                         candidate_moves.append(next_move_in_line)
+                    for name in openings_to_opening:
+                        if name[0] == opening:
+                            self.opening = name[1]
+                            break
+                    break
             if candidate_moves:
                 next_move = candidate_moves[random.randint(0, len(candidate_moves) - 1)]
-        else:
-            first_moves = ['c4', 'd4', 'e4', 'Nf3']
-            next_move = first_moves[random.randint(0, len(first_moves) - 1)]
+        else:  # first moves for white and black
+            if len(self.move_log) == 1:  # blacks reply
+                first_move = self.move_log[0].get_notation()
+                black_reply = []
+                if first_move == 'Nf3':
+                    self.opening = 'Reti Opening'
+                    black_reply = ['Nf6', 'd5', 'c5', 'g6']
+                elif first_move == 'c4':
+                    self.opening = 'English Opening'
+                    black_reply = ['c5', 'e4', 'Nf6', 'e6']
+                elif first_move == 'd4':
+                    self.opening = "Queen's Pawn Opening"
+                    black_reply = ['Nf6', 'd5', 'e6', 'd6', 'f5', 'g6', 'c5']
+                elif first_move == 'e4':
+                    self.opening = "King's Pawn Opening"
+                    black_reply = ['Nf6', 'd5', 'e6', 'd6', 'g6', 'c5', 'e5', 'c6']
+                if black_reply:
+                    next_move = black_reply[random.randint(0, len(black_reply) - 1)]
+                else:
+                    next_move = None
+            else:  # white
+                first_moves = ['c4', 'd4', 'e4', 'Nf3', 'd4', 'e4', 'd4', 'e4']  # biased towards e4, d4
+                next_move = first_moves[random.randint(0, len(first_moves) - 1)]
         print("Next move should be", next_move)
         return next_move
 
     def get_next_opening_line_move(self, opening, moves_so_far):
-        for move in moves_so_far:
-            if move not in opening:
-                return False
-        # all moves so far are in the opening, return next move
-        return opening[moves_so_far[-1]]
+        if len(moves_so_far) >= 2:
+            for move in range(0, len(moves_so_far) - 1):
+                if moves_so_far[move] not in opening:
+                    return False
+                if not (opening[moves_so_far[move]] == moves_so_far[move + 1]):  # hashmap
+                    return False
+            # all moves so far are in the opening, return next move
+            return opening[moves_so_far[-1]]
+        else:
+            if moves_so_far[0] in opening:
+                return opening[moves_so_far[0]]
+            return False
 
     def get_boardstate(self):
         board_string = ''

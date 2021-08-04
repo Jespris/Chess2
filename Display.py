@@ -112,6 +112,7 @@ def display_move_log(screen, gamestate, eval):
     box_height = 8 * SQ_SIZE
     p.draw.rect(screen, p.Color("white"), p.Rect(box_pos[0], box_pos[1], box_width, box_height))
     black = p.Color("black")
+    display_opening(screen, gamestate, box_pos, box_width)
     if len(gamestate.move_log) >= 2:
         move_nr = len(gamestate.move_log) // 2
         font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
@@ -219,3 +220,15 @@ def display_eval_bar(screen, gamestate):
     p.draw.rect(screen, p.Color("black"), p.Rect(BOARDGAP // 2, BOARDGAP, SQ_SIZE // 2, eval * pixels_per_eval))
     # draw middlepoint
     p.draw.rect(screen, p.Color("gold"), p.Rect(BOARDGAP // 2, HEIGHT // 2, SQ_SIZE // 2, SQ_SIZE // 10))
+
+
+def display_opening(screen, gamestate, box_pos, box_width):
+    text_center = [box_pos[0] + box_width // 2, box_pos[1] - SQ_SIZE // 4]
+    # background
+    p.draw.rect(screen, p.Color("white"), p.Rect(box_pos[0], box_pos[1] - SQ_SIZE // 2, box_width, SQ_SIZE // 2))
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+    text = font.render(gamestate.opening, False, p.Color("black"))
+    textRect = text.get_rect()
+    textRect.center = (text_center[0], text_center[1])
+    screen.blit(text, textRect)
+
