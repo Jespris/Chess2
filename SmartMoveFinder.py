@@ -3,7 +3,6 @@ Responsible for finding a good move for the AI
 """
 
 import random as r
-import Engine
 
 
 piece_values = {6: 0, 5: 9, 4: 3, 3: 3, 2: 5, 1: 1}
@@ -24,13 +23,13 @@ knight_scores = [[1, 1, 1, 1, 1, 1, 1, 1],
                  [1, 1, 1, 1, 1, 1, 1, 1]]  # TODO: tweak knight scores
 
 opening_king_scores =   [[2, 3, 3, 1, 1, 1, 3, 2],
-                 [2, 1, 1, 1, 1, 1, 1, 2],
-                 [1, 1, 1, 1, 1, 1, 1, 1],
-                 [1, 1, 1, 1, 1, 1, 1, 1],
-                 [1, 1, 1, 1, 1, 1, 1, 1],
-                 [1, 1, 1, 1, 1, 1, 1, 1],
-                 [2, 1, 1, 1, 1, 1, 1, 2],
-                 [2, 3, 3, 1, 1, 1, 3, 2]]  # prefers castles?!?
+                         [2, 1, 1, 1, 1, 1, 1, 2],
+                         [1, 1, 1, 1, 1, 1, 1, 1],
+                         [1, 1, 1, 1, 1, 1, 1, 1],
+                         [1, 1, 1, 1, 1, 1, 1, 1],
+                         [1, 1, 1, 1, 1, 1, 1, 1],
+                         [2, 1, 1, 1, 1, 1, 1, 2],
+                         [2, 3, 3, 1, 1, 1, 3, 2]]  # prefers castles?!?
 
 endgame_king_scores =   [[1, 1, 1, 1, 1, 1, 1, 1],
                          [1, 1, 1, 1, 1, 1, 1, 1],
@@ -180,7 +179,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
     if not next_move:
         board_state_copies = 0
         actual_depth = get_good_depth(gamestate)
-        if len(gamestate.move_log) <= 10:  # opening
+        if len(gamestate.move_log) < 3:  # opening
             next_move = gamestate.get_opening()
         if not next_move:
             find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
@@ -359,6 +358,11 @@ def score_board(gamestate):
         return STALEMATE
     white_squares_controlled = {}  # dictionary with number of times each square is controlled
     black_squares_controlled = {}
+    white_pawn_chains = 0
+    black_pawn_chains = 0
+    pawn_chain_weight = 10  # higher = less positional impact
+    # TODO: instead of checking squares controlled, just check number of available moves from a position, more = better
+    #  - this is maybe less computaionally heavy than checking the squares controlled
     sq_controlled_weight = 12  # higher = less positional impact
     score = 0
     weights_impact = 10  # higher = less positional impact
@@ -381,11 +385,15 @@ def score_board(gamestate):
                         control_square = (row - 1, col + direction) if white else (row + 1, col + direction)
                         if is_inside_board(control_square[0], control_square[1]):
                             if white:
+                                if gamestate.board[control_square[0]][control_square[1]] == 1:  # connected pawn
+                                    white_pawn_chains += 1
                                 if control_square not in white_squares_controlled:
                                     white_squares_controlled[control_square] = 1
                                 else:
                                     white_squares_controlled[control_square] += 1
                             else:
+                                if gamestate.board[control_square[0]][control_square[1]] == -1:  # connected pawn
+                                    black_pawn_chains += 1
                                 if control_square not in black_squares_controlled:
                                     black_squares_controlled[control_square] = 1
                                 else:
@@ -487,6 +495,8 @@ def score_board(gamestate):
     square_controlled_eval = (white_control_points - black_control_points) / sq_controlled_weight
     # print("Square controlled evaluation:", square_controlled_eval)
     score += square_controlled_eval
+    # TODO: add points for connected pawn chains
+    score += (white_pawn_chains - black_pawn_chains) / pawn_chain_weight
     return score
 
 
