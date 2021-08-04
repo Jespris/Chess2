@@ -181,8 +181,13 @@ def find_best_move(gamestate, legal_moves, return_queue):
     if not next_move:
         board_state_copies = 0
         actual_depth = get_good_depth(gamestate)
-        if len(gamestate.move_log) < 3:  # opening
-            next_move = gamestate.get_opening()
+        if len(gamestate.move_log) < 10:  # opening
+            next_move_in_opening = gamestate.get_opening()
+            if next_move_in_opening:
+                for move in legal_moves:
+                    if move.get_notation() == next_move_in_opening:  # check if this move results in the same notation the opening line move is
+                        next_move = move
+                        break
         if not next_move:
             find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
         print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
@@ -410,7 +415,7 @@ def score_board(gamestate):
                             if check_square == 0:
                                 available_moves += available_move_adder
 
-    score += available_moves / 10
+    score += available_moves / 20
 
     # TODO: add points for connected pawn chains
     score += (white_pawn_chains - black_pawn_chains) / pawn_chain_weight

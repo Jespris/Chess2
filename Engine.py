@@ -595,11 +595,57 @@ class GameState:
             return
 
     def get_opening(self):
-        white_openings = [Move((6, 4), (4, 4), self.board), Move((6, 3), (4, 3), self.board),
-                          Move((6, 2), (4, 2), self.board), Move((7, 6), (5, 5), self.board)]
-        if not self.move_log:
-            return white_openings[random.randint(0, len(white_openings) - 1)]
-        return None
+        next_move = None
+        if self.move_log:
+            candidate_moves = []
+            moves_so_far = []
+            for move in self.move_log:
+                moves_so_far.append(move.get_notation())
+            ruy_lopez = {'e4': 'e5',
+                         'e5': 'Nf3',
+                         'Nf3': 'Nc6',
+                         'Nc6': 'Bb5',
+                         'Bb5': ('a6', 'Nf6')}
+            french_defence = {'e4': 'e6',
+                              'e6': 'd4',
+                              'd4': 'd5',
+                              'd5': ('Nc3', 'Nd2', 'e5', 'exd5')}
+            caro_kann = {'e4': 'c6',
+                         'c6': 'd4',
+                         'd4': 'd5',
+                         'd5': ('Nc3', 'Nd2', 'e5', 'exd5')}
+            kings_gambit = {'e4': 'e5',
+                            'e5': 'f4',
+                            'f4': 'exf4',
+                            'exf4': 'Nf3',
+                            'Nf3': ('g5', 'd5', 'd6')}
+            reti = {'Nf3': 'Nf6',
+                    'Nf6': 'g3',
+                    'g3': 'g6'}
+
+            openings = [ruy_lopez]
+            for opening in openings:
+                next_move_in_line = self.get_next_opening_line_move(opening, moves_so_far)
+                if next_move_in_line:
+                    if type(next_move_in_line) is tuple:
+                        for move in next_move_in_line:
+                            candidate_moves.append(move)
+                    else:
+                        candidate_moves.append(next_move_in_line)
+            if candidate_moves:
+                next_move = candidate_moves[random.randint(0, len(candidate_moves) - 1)]
+        else:
+            first_moves = ['c4', 'd4', 'e4', 'Nf3']
+            next_move = first_moves[random.randint(0, len(first_moves) - 1)]
+        print("Next move should be", next_move)
+        return next_move
+
+    def get_next_opening_line_move(self, opening, moves_so_far):
+        for move in moves_so_far:
+            if move not in opening:
+                return False
+        # all moves so far are in the opening, return next move
+        return opening[moves_so_far[-1]]
 
     def get_boardstate(self):
         board_string = ''
@@ -642,8 +688,9 @@ class Move:
         self.start_col = start_sq[1]
         self.end_row = end_sq[0]
         self.end_col = end_sq[1]
-        self.piece_moved = board[self.start_row][self.start_col]
-        self.piece_captured = board[self.end_row][self.end_col]
+        self.board = board
+        self.piece_moved = self.board[self.start_row][self.start_col]
+        self.piece_captured = self.board[self.end_row][self.end_col]
 
         self.promote_to = promote_to
         self.is_pawn_promotion = False if not self.promote_to else True

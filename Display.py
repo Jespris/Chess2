@@ -126,8 +126,8 @@ def display_move_log(screen, gamestate, eval):
 
                 # moves
                 if eval:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 2], 1))
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2], 1))
                 else:
                     white_move = gamestate.move_log[i * 2 - 2].get_notation()
                     black_move = gamestate.move_log[i * 2 - 1].get_notation()
@@ -148,8 +148,8 @@ def display_move_log(screen, gamestate, eval):
 
                 # moves
                 if eval:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 2], 1))
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
+                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2], 1))
                 else:
                     white_move = gamestate.move_log[i * 2 - 2].get_notation()
                     black_move = gamestate.move_log[i * 2 - 1].get_notation()

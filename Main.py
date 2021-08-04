@@ -27,7 +27,7 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
+    white_human = True
     black_human = False
     AI_thinking = False
     move_finder_process = None
@@ -79,6 +79,7 @@ def main():
                                 if move == legal_moves[i]:
                                     move = legal_moves[i]
                                     gamestate.make_move(move)
+                                    gamestate.get_opening()
                                     gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
                                     # play_sound('move_piece', 0.5)
                                     move_made = True
@@ -120,6 +121,7 @@ def main():
                             if move == legal_moves[i]:
                                 move = legal_moves[i]
                                 gamestate.make_move(move)
+                                gamestate.get_opening()
                                 gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
                                 # play_sound('move_piece', 0.5)
                                 move_made = True
