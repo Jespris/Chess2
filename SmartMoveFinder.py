@@ -111,8 +111,10 @@ piece_position_scores = {3: knight_scores, 6: opening_king_scores if not ENDGAME
 rook_directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 bishop_directions = [[1, 1], [1, -1], [-1, -1], [-1, 1]]
 queen_directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]]
+knight_directions = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [-1, 2], [1, -2], [-1, -2]]
+king_directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]]
 
-piece_directions = {2: rook_directions, 4: bishop_directions, 5: queen_directions}
+piece_directions = {2: rook_directions, 4: bishop_directions, 5: queen_directions, 3: knight_directions, 6: king_directions}
 
 
 def find_random_move(legal_moves):
@@ -356,11 +358,10 @@ def score_board(gamestate):
             return CHECKMATE
     elif gamestate.draw:
         return STALEMATE
-    white_squares_controlled = {}  # dictionary with number of times each square is controlled
-    black_squares_controlled = {}
     white_pawn_chains = 0
     black_pawn_chains = 0
     pawn_chain_weight = 10  # higher = less positional impact
+    available_moves = 0
     # TODO: instead of checking squares controlled, just check number of available moves from a position, more = better
     #  - this is maybe less computaionally heavy than checking the squares controlled
     sq_controlled_weight = 12  # higher = less positional impact
@@ -378,123 +379,39 @@ def score_board(gamestate):
                 if square > 0:
                     white = True
                 score += piece_values[abs(square)] + piece_score if white else -(piece_values[abs(square)] + piece_score)
-                # check if the squares controlled by this piece are in the squares controlled list, if not, append
-                if abs(square) == 1:  # pawn
-                    directions = [-1, 1]
-                    for direction in directions:
-                        control_square = (row - 1, col + direction) if white else (row + 1, col + direction)
-                        if is_inside_board(control_square[0], control_square[1]):
-                            if white:
-                                if gamestate.board[control_square[0]][control_square[1]] == 1:  # connected pawn
-                                    white_pawn_chains += 1
-                                if control_square not in white_squares_controlled:
-                                    white_squares_controlled[control_square] = 1
-                                else:
-                                    white_squares_controlled[control_square] += 1
-                            else:
-                                if gamestate.board[control_square[0]][control_square[1]] == -1:  # connected pawn
-                                    black_pawn_chains += 1
-                                if control_square not in black_squares_controlled:
-                                    black_squares_controlled[control_square] = 1
-                                else:
-                                    black_squares_controlled[control_square] += 1
-                elif abs(square) == 6:  # king
-                    directions = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]
-                    for direction in directions:
-                        new_row = row + direction[0]
-                        new_col = col + direction[1]
-                        control_square = (new_row, new_col)
-                        if is_inside_board(new_row, new_col):
-                            if white:
-                                if control_square not in white_squares_controlled:
-                                    white_squares_controlled[control_square] = 1
-                                else:
-                                    white_squares_controlled[control_square] += 1
-                            else:
-                                if control_square not in black_squares_controlled:
-                                    black_squares_controlled[control_square] = 1
-                                else:
-                                    black_squares_controlled[control_square] += 1
-                elif abs(square) == 2 or abs(square) == 5 or abs(square) == 4:
-                    directions = piece_directions[abs(square)]
-                    for direction in directions:
-                        for rad in range(1, 8):
-                            new_row = row + direction[0] * rad
-                            new_col = col + direction[0] * rad
-                            control_square = (new_row, new_col)
-                            if is_inside_board(new_row, new_col):
-                                if white:
-                                    if gamestate.board[new_row][new_col] == 0:  # empty square
-                                        if control_square not in white_squares_controlled:
-                                            white_squares_controlled[control_square] = 1
-                                        else:
-                                            white_squares_controlled[control_square] += 1
-                                    elif gamestate.board[new_row][new_col] != 0:  # a piece blocking larger radius so break
-                                        if control_square not in white_squares_controlled:
-                                            white_squares_controlled[control_square] = 1
-                                        else:
-                                            white_squares_controlled[control_square] += 1
-                                        break
-                                else:
-                                    if gamestate.board[new_row][new_col] == 0:  # empty square
-                                        if control_square not in black_squares_controlled:
-                                            black_squares_controlled[control_square] = 1
-                                        else:
-                                            black_squares_controlled[control_square] += 1
-                                    elif gamestate.board[new_row][new_col] != 0:  # a piece blocking larger radius so break
-                                        if control_square not in black_squares_controlled:
-                                            black_squares_controlled[control_square] = 1
-                                        else:
-                                            black_squares_controlled[control_square] += 1
-                                        break
-                            else:  # not inside board so no point checking larger radius
+                # checking available moves
+                available_move_adder = 1 if square > 0 else -1
+                if abs(square) == 1:  # pawns
+                    move_direction = -1 if square == 1 else 1
+                    if gamestate.board[row + move_direction][col] == 0:
+                        available_moves += available_move_adder
+                elif 2 <= abs(square) <= 5 and abs(square) != 3:  # all pieces excluding nights
+                    for direction in piece_directions[abs(square)]:
+                        for i in range(1, 8):
+                            new_row = row + direction[0] * i
+                            new_col = col + direction[1] * i
+                            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                                check_square = gamestate.board[new_row][new_col]
+                                if check_square == 0:
+                                    available_moves += available_move_adder
+                                elif square * check_square < 0:  # enemy piece
+                                    available_moves += available_move_adder
+                                    break
+                                else:  # piece occupy so can't move there
+                                    break
+                            else:  # outside board so point in checking further
                                 break
-                elif abs(square) == 3:  # knight
-                    directions = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [-1, 2], [1, -2], [-1, -2]]
-                    for direction in directions:
+                elif abs(square) == 3 or abs(square) == 6:
+                    for direction in piece_directions[abs(square)]:
                         new_row = row + direction[0]
                         new_col = col + direction[1]
-                        control_square = (new_row, new_col)
                         if 0 <= new_row < 8 and 0 <= new_col < 8:
-                            if white:
-                                if control_square not in white_squares_controlled:
-                                    white_squares_controlled[control_square] = 1
-                                else:
-                                    white_squares_controlled[control_square] += 1
-                            else:
-                                if control_square not in black_squares_controlled:
-                                    black_squares_controlled[control_square] = 1
-                                else:
-                                    black_squares_controlled[control_square] += 1
+                            check_square = gamestate.board[new_row][new_col]
+                            if check_square == 0:
+                                available_moves += available_move_adder
 
-    # compare square control
-    white_squares = []
-    black_squares = []
-    for i in white_squares_controlled:
-        if i not in black_squares_controlled:
-            white_squares.append(i)
-        else:  # disputed square
-            if white_squares_controlled[i] - black_squares_controlled[i] > 0:  # white controls square
-                white_squares.append(i)
-                # print("White controls disputed square", Engine.get_rank_file(i[0], i[1]))
-    for j in black_squares_controlled:
-        if j not in white_squares_controlled:
-            black_squares.append(j)
-        else:  # disputed square
-            if black_squares_controlled[j] - white_squares_controlled[j] > 0:  # black controls square
-                black_squares.append(j)
-                # print("Black controls disputed square", Engine.get_rank_file(j[0], j[1]))
+    score += available_moves / 10
 
-    white_control_points = 0
-    black_control_points = 0
-    for square in white_squares:
-        white_control_points += white_square_control[square[0]][square[1]]
-    for square in black_squares:
-        black_control_points += black_square_control[square[0]][square[1]]
-
-    square_controlled_eval = (white_control_points - black_control_points) / sq_controlled_weight
-    # print("Square controlled evaluation:", square_controlled_eval)
-    score += square_controlled_eval
     # TODO: add points for connected pawn chains
     score += (white_pawn_chains - black_pawn_chains) / pawn_chain_weight
     return score
@@ -504,9 +421,9 @@ def evaluate_endgame(board):
     pieces = 0
     for row in range(8):
         for col in range(8):
-            if board[row][col] != 0 and abs(board[row][col]) != 1:
+            if board[row][col] != 0 and abs(board[row][col]) != 1:  # don't count pawns
                 pieces += 1
-    if pieces > 4:
+    if pieces > 5:
         return False
     return True
 
