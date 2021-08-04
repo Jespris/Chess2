@@ -181,7 +181,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
     if not next_move:
         board_state_copies = 0
         actual_depth = get_good_depth(gamestate)
-        if len(gamestate.move_log) < 10:  # opening
+        if len(gamestate.move_log) < 6:  # opening
             next_move_in_opening = gamestate.get_opening()
             if next_move_in_opening:
                 for move in legal_moves:
