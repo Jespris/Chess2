@@ -26,8 +26,8 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
-    black_human = False
+    white_human = True
+    black_human = True
     play_alap = True
     show_eval = True
     AI_thinking = False
@@ -128,8 +128,10 @@ def main():
                                 move_made = True
                                 sq_selected = ()  # reset clicks
                                 mouse_clicks = []
+                                break
                         if not move_made:
-                            mouse_clicks = [sq_selected]
+                            sq_selected = ()
+                            mouse_clicks = []
 
         # AI moves
         if not game_over and not is_human_turn:

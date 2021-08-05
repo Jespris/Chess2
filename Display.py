@@ -121,19 +121,18 @@ def display_move_log(screen, gamestate, eval):
     move_gap = SQ_SIZE // 3
     font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
     log = gamestate.move_log
-    moves_fit = 2 * (box_height - (move_nr_start_y - box_pos[1])) // move_gap
+    moves_fit = 48
     move_x_gap = box_width // 3
     if log:  # there is moves to display
         # make new log to fit the display
         note_log = []
-        if len(log) >= moves_fit:
-            for move in range(len(log) - moves_fit, len(log)):
-                note_log.append([move, log[move].get_notation(), str(round(gamestate.eval_log[move], 2))])
-        else:
-            for move in range(len(log)):
-                note_log.append([move, log[move].get_notation(), str(round(gamestate.eval_log[move + 1], 2))])
+        start_integer = len(log) - moves_fit
+        if start_integer % 2 != 0:
+            start_integer += 1
+        for move in range(start_integer, len(log)):
+            if move >= 0:
+                note_log.append([move, log[move].get_notation(), str(round(gamestate.eval_log[move + 1], 1))])
 
-        # draw move nr
         for move in range(len(note_log)):
             if note_log[move][0] % 2 == 0:  # whites move
                 text = font.render(str(note_log[move][0] // 2 + 1), True, black)
@@ -150,7 +149,8 @@ def display_move_log(screen, gamestate, eval):
                 black_move = note_log[move][1] + "   " + note_log[move][2] if eval else note_log[move][1]
                 black_text = font.render(black_move, False, black)
                 black_text_rect = black_text.get_rect()
-                black_text_rect.center = (box_pos[0] + 2 * move_x_gap, move_nr_start_y + (move // 2) * move_gap)
+                row = move // 2  # if not (move == len(note_log) - 1 and len(note_log) == 48) else 23
+                black_text_rect.center = (box_pos[0] + 2 * move_x_gap, move_nr_start_y + row * move_gap)
                 screen.blit(black_text, black_text_rect)
 
 
