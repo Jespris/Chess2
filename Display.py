@@ -207,8 +207,12 @@ def display_eval_bar(screen, gamestate):
     # black eval
     max_eval = 10  # total eval range both directions => 20
     pixels_per_eval = total // (max_eval * 2)
-    eval = max_eval - gamestate.eval_log[-1]
-    p.draw.rect(screen, p.Color("black"), p.Rect(BOARDGAP // 2, BOARDGAP, SQ_SIZE // 2, eval * pixels_per_eval))
+    evaluation = max_eval - gamestate.eval_log[-1]
+    if evaluation < 0:
+        evaluation = 0
+    elif evaluation > 20:
+        evaluation = 20
+    p.draw.rect(screen, p.Color("black"), p.Rect(BOARDGAP // 2, BOARDGAP, SQ_SIZE // 2, evaluation * pixels_per_eval))
     # draw middlepoint
     p.draw.rect(screen, p.Color("gold"), p.Rect(BOARDGAP // 2, HEIGHT // 2, SQ_SIZE // 2, SQ_SIZE // 10))
 

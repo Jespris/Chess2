@@ -38,6 +38,7 @@ class GameState:
         self.material_balance = 0  # negative = black is up material
         self.games_won = [games_won[0], games_won[1]]  # for ALAP testing
         self.white_to_move = True
+        self.in_opening = True
         self.white_king = (7, 4)
         self.black_king = (0, 4)
         self.castle_rights = CastleRights(True, True, True, True)
@@ -713,7 +714,11 @@ class GameState:
                 first_moves = ['c4', 'd4', 'e4', 'Nf3', 'd4', 'e4', 'd4', 'e4']  # biased towards e4, d4
                 next_move = first_moves[random.randint(0, len(first_moves) - 1)]
         print("Next move should be", next_move)
-        return next_move
+        if next_move is None:
+            in_opening = False
+        elif next_move:
+            in_opening = True
+        return next_move, in_opening
 
     def get_next_opening_line_move(self, opening, moves_so_far):
         if len(moves_so_far) >= 2:

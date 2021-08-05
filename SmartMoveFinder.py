@@ -124,25 +124,53 @@ def find_random_move(legal_moves):
 def find_best_move(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     next_move = None
+    in_opening = False
     actual_depth = 1
     counter = 0
     if len(legal_moves) == 1:
         next_move = legal_moves[0]
-
+    board_state_copies = 0
     if not next_move:
-        board_state_copies = 0
-        actual_depth = get_good_depth()
-        if len(gamestate.move_log) < 6:  # opening
-            next_move_in_opening = gamestate.get_opening()
+
+        if gamestate.in_opening:  # opening
+            print("In opening prep:", str(gamestate.in_opening))
+            next_move_in_opening, in_opening = gamestate.get_opening()
             if next_move_in_opening:
                 for move in legal_moves:
                     if move.get_notation() == next_move_in_opening:  # check if this move results in the same notation the opening line move is
                         next_move = move
                         break
+
         if not next_move:
+            gamestate.in_opening = False
+            actual_depth = get_good_depth()
             find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+        # check if the move leads to a draw, if so, change if it is a winning position
+        if next_move is not None:
+            if len(gamestate.move_log) > 8:
+                if next_move.move_ID == gamestate.move_log[-4].move_ID and next_move.move_ID == gamestate.move_log[-8].move_ID:
+                    print("Best move found leads to draw!")
+                    board_eval = score_board(gamestate)
+                    if (board_eval > 1 and gamestate.white_to_move) or (board_eval < -1 and not gamestate.white_to_move):
+                        # position good enough to play for a win
+                        print("This position is good enough to play for a win")
+                        legal_moves_best_removed = remove_legal_move(legal_moves, next_move)
+                        find_move_nega_max_alpha_beta(gamestate, legal_moves_best_removed, actual_depth, -CHECKMATE,
+                                                      CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+                else:
+                    print("Best move isn't threefold repetition!")
         print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
-    return_queue.put((next_move, (counter, actual_depth)))
+    return_queue.put((next_move, (counter, actual_depth), in_opening))
+
+
+def remove_legal_move(legal_moves, move_to_remove):
+    new_legal_moves = []
+    for move in legal_moves:
+        if move != move_to_remove:
+            new_legal_moves.append(move)
+        else:
+            print("Best move removed!")
+    return new_legal_moves
 
 
 def find_move_nega_max_alpha_beta(gamestate, legal_moves, depth, alpha, beta, turn_mult, actual_depth):
