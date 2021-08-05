@@ -121,7 +121,7 @@ def display_move_log(screen, gamestate, eval):
     move_gap = SQ_SIZE // 3
     font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
     log = gamestate.move_log
-    moves_fit = (box_height - (move_nr_start_y - box_pos[1])) // move_gap
+    moves_fit = 2 * (box_height - (move_nr_start_y - box_pos[1])) // move_gap
     move_x_gap = box_width // 3
     if log:  # there is moves to display
         # make new log to fit the display
@@ -152,55 +152,6 @@ def display_move_log(screen, gamestate, eval):
                 black_text_rect = black_text.get_rect()
                 black_text_rect.center = (box_pos[0] + 2 * move_x_gap, move_nr_start_y + (move // 2) * move_gap)
                 screen.blit(black_text, black_text_rect)
-    """if len(gamestate.move_log) >= 2:
-        move_nr = len(gamestate.move_log) // 2
-        font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
-        row_height = SQ_SIZE // 3
-        possible_amount_of_moves_displayed = box_height // row_height
-        if move_nr > possible_amount_of_moves_displayed:  # cut the moves
-            for i in range(1 + (move_nr - possible_amount_of_moves_displayed), move_nr + 1):
-                text = font.render(str(i), True, black)
-                textRect = text.get_rect()
-                textRect.center = (box_pos[0] + SQ_SIZE // 6, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
-                screen.blit(text, textRect)
-
-                # moves
-                if eval:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2], 1))
-                else:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation()
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation()
-                white_text = font.render(white_move, False, black)
-                black_text = font.render(black_move, False, black)
-                white_text_Rect = white_text.get_rect()
-                white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
-                screen.blit(white_text, white_text_Rect)
-                black_text_Rect = black_text.get_rect()
-                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + int(2.5 * SQ_SIZE), box_pos[1] + (i - (move_nr - possible_amount_of_moves_displayed)) * row_height)
-                screen.blit(black_text, black_text_Rect)
-        else:  # display from beginning
-            for i in range(1, move_nr + 1):
-                text = font.render(str(i), True, black)
-                textRect = text.get_rect()
-                textRect.center = (box_pos[0] + SQ_SIZE // 6, box_pos[1] + i * row_height)
-                screen.blit(text, textRect)
-
-                # moves
-                if eval:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation() + "  " + str(round(gamestate.eval_log[i * 2 - 1], 1))
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation() + "  " + str(round(gamestate.eval_log[i * 2], 1))
-                else:
-                    white_move = gamestate.move_log[i * 2 - 2].get_notation()
-                    black_move = gamestate.move_log[i * 2 - 1].get_notation()
-                white_text = font.render(white_move, False, black)
-                black_text = font.render(black_move, False, black)
-                white_text_Rect = white_text.get_rect()
-                white_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + SQ_SIZE, box_pos[1] + i * row_height)
-                screen.blit(white_text, white_text_Rect)
-                black_text_Rect = black_text.get_rect()
-                black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + int(2.5 * SQ_SIZE), box_pos[1] + i * row_height)
-                screen.blit(black_text, black_text_Rect)"""
 
 
 def display_last_move(screen, gamestate):
@@ -225,6 +176,7 @@ def display_game_over(screen, gamestate, message):
     screen.blit(text, textRect)
 
 # reset button
+
 
 def get_reset_button():
     box_pos = [BOARDGAP + 10 * SQ_SIZE + SQ_SIZE // 2, BOARDGAP + 8 * SQ_SIZE]

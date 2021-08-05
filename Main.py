@@ -26,8 +26,8 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = True
-    black_human = True
+    white_human = False
+    black_human = False
     play_alap = True
     show_eval = True
     AI_thinking = False
