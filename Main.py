@@ -29,6 +29,7 @@ def main():
     game_over = False
     white_human = False
     black_human = False
+    play_alap = True
     AI_thinking = False
     move_finder_process = None
     flag = True
@@ -177,6 +178,11 @@ def main():
                 gamestate.games_won[1] += 0.5
             game_over = True
             Display.display_game_over(screen, gamestate, "Draw!")
+
+        if game_over and play_alap and (not white_human and not black_human):  # play forever
+            gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE, gamestate.games_won)
+            legal_moves = gamestate.get_legal_moves()
+            game_over = False
 
         clock.tick(FPS)
         p.display.flip()
