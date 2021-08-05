@@ -53,7 +53,7 @@ class GameState:
         self.promote_to = 5 if self.white_to_move else -5
         self.boardstates_log = []
         self.states_depth_log = []
-        self.eval_log = []
+        self.eval_log = [0]
 
     """
     MOVE

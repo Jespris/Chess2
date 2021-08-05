@@ -10,6 +10,7 @@ Main displaying file, responsible for:
 """
 
 import pygame as p
+import math
 from win32api import GetSystemMetrics
 
 WIDTH = GetSystemMetrics(0)
@@ -108,13 +109,50 @@ def display_coordinates(screen):
 
 
 def display_move_log(screen, gamestate, eval):
+    # display move nr, white move and black move separately
     box_pos = [BOARDGAP + 9 * SQ_SIZE, BOARDGAP]  # upper left corner
     box_width = 4 * SQ_SIZE
     box_height = 8 * SQ_SIZE
     p.draw.rect(screen, p.Color("white"), p.Rect(box_pos[0], box_pos[1], box_width, box_height))
     black = p.Color("black")
     display_opening(screen, gamestate, box_pos, box_width)
-    if len(gamestate.move_log) >= 2:
+    move_nr_x_pos = box_pos[0] + SQ_SIZE // 4
+    move_nr_start_y = box_pos[1] + SQ_SIZE // 4
+    move_gap = SQ_SIZE // 3
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
+    log = gamestate.move_log
+    moves_fit = (box_height - (move_nr_start_y - box_pos[1])) // move_gap
+    move_x_gap = box_width // 3
+    if log:  # there is moves to display
+        # make new log to fit the display
+        note_log = []
+        if len(log) >= moves_fit:
+            for move in range(len(log) - moves_fit, len(log)):
+                note_log.append([move, log[move].get_notation(), str(round(gamestate.eval_log[move], 2))])
+        else:
+            for move in range(len(log)):
+                note_log.append([move, log[move].get_notation(), str(round(gamestate.eval_log[move + 1], 2))])
+
+        # draw move nr
+        for move in range(len(note_log)):
+            if note_log[move][0] % 2 == 0:  # whites move
+                text = font.render(str(note_log[move][0] // 2 + 1), True, black)
+                textRect = text.get_rect()
+                textRect.center = (move_nr_x_pos, move_nr_start_y + (move // 2) * move_gap)
+                screen.blit(text, textRect)
+                # moves
+                white_move = note_log[move][1] + "   " + note_log[move][2] if eval else note_log[move][1]
+                white_text = font.render(white_move, False, black)
+                white_text_Rect = white_text.get_rect()
+                white_text_Rect.center = (box_pos[0] + move_x_gap, move_nr_start_y + (move // 2) * move_gap)
+                screen.blit(white_text, white_text_Rect)
+            else:  # black played last move
+                black_move = note_log[move][1] + "   " + note_log[move][2] if eval else note_log[move][1]
+                black_text = font.render(black_move, False, black)
+                black_text_rect = black_text.get_rect()
+                black_text_rect.center = (box_pos[0] + 2 * move_x_gap, move_nr_start_y + (move // 2) * move_gap)
+                screen.blit(black_text, black_text_rect)
+    """if len(gamestate.move_log) >= 2:
         move_nr = len(gamestate.move_log) // 2
         font = p.font.Font('freesansbold.ttf', SQ_SIZE // 4)
         row_height = SQ_SIZE // 3
@@ -162,7 +200,7 @@ def display_move_log(screen, gamestate, eval):
                 screen.blit(white_text, white_text_Rect)
                 black_text_Rect = black_text.get_rect()
                 black_text_Rect.center = (box_pos[0] + SQ_SIZE // 6 + int(2.5 * SQ_SIZE), box_pos[1] + i * row_height)
-                screen.blit(black_text, black_text_Rect)
+                screen.blit(black_text, black_text_Rect)"""
 
 
 def display_last_move(screen, gamestate):

@@ -18,7 +18,6 @@ def main():
     screen.fill(p.Color("Gray"))
     gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE, [0, 0])
     gamestate.get_boardstate()
-    gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
     clock = p.time.Clock()
     sq_selected = ()
     mouse_clicks = []
@@ -27,9 +26,10 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
-    black_human = False
+    white_human = True
+    black_human = True
     play_alap = True
+    show_eval = True
     AI_thinking = False
     move_finder_process = None
     flag = True
@@ -158,7 +158,8 @@ def main():
             legal_moves = gamestate.get_legal_moves()
             gamestate.get_draw()
 
-        Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos(), (not white_human and not black_human))
+        Display.display_board(screen, gamestate, sq_selected, legal_moves, mouse_down, p.mouse.get_pos(),
+                              ((not white_human and not black_human) or show_eval))
 
         # Checkmate and draw
         if gamestate.checkmate:
