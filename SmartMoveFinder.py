@@ -367,6 +367,8 @@ def score_board(gamestate):
     black_pawn_chains = 0
     pawn_chain_weight = 10  # higher = less positional impact
     available_moves = 0
+    available_moves_weight = 20
+    material_weight = 1.2
     # TODO: instead of checking squares controlled, just check number of available moves from a position, more = better
     #  - this is maybe less computaionally heavy than checking the squares controlled
     sq_controlled_weight = 12  # higher = less positional impact
@@ -383,7 +385,7 @@ def score_board(gamestate):
                     piece_score = piece_position_scores[square][row][col] / weights_impact
                 if square > 0:
                     white = True
-                score += piece_values[abs(square)] + piece_score if white else -(piece_values[abs(square)] + piece_score)
+                score += piece_score if white else -piece_score
                 # checking available moves
                 available_move_adder = 1 if square > 0 else -1
                 if abs(square) == 1:  # pawns
@@ -414,8 +416,11 @@ def score_board(gamestate):
                             check_square = gamestate.board[new_row][new_col]
                             if check_square == 0:
                                 available_moves += available_move_adder
+    # better position the more options you have generally
+    score += available_moves / available_moves_weight
 
-    score += available_moves / 20
+    # material score
+    score += gamestate.material_balance / material_weight
 
     # TODO: add points for connected pawn chains
     score += (white_pawn_chains - black_pawn_chains) / pawn_chain_weight
@@ -444,8 +449,8 @@ def score_material(board):
     for row in range(8):
         for col in range(8):
             if board[row][col] > 0:
-                score += piece_values[board[row][col][1]]
+                score += piece_values[abs(board[row][col])]
             elif board[row][col] < 0:
-                score -= piece_values[board[row][col][1]]
+                score -= piece_values[abs(board[row][col])]
     return score
 

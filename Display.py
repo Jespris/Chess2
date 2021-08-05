@@ -39,6 +39,7 @@ def display_board(screen, gamestate, square_selected, legal_moves, mouse_down, m
         display_eval_bar(screen, gamestate)
     display_move_log(screen, gamestate, eval)
     display_reset_button(screen)
+    display_material_balance(screen, gamestate)
 
 
 def display_squares(screen):
@@ -231,4 +232,21 @@ def display_opening(screen, gamestate, box_pos, box_width):
     textRect = text.get_rect()
     textRect.center = (text_center[0], text_center[1])
     screen.blit(text, textRect)
+
+
+def display_material_balance(screen, gamestate):
+    black_center = (BOARDGAP + int(7 * SQ_SIZE), BOARDGAP - SQ_SIZE // 2)
+    white_center = (BOARDGAP + int(7 * SQ_SIZE), BOARDGAP + int(8.5 * SQ_SIZE))
+    font = p.font.Font('freesansbold.ttf', SQ_SIZE // 3)
+    material = gamestate.material_balance
+    white_text = str(gamestate.games_won[0]) + " White +" + str(material) if material > 0 else str(gamestate.games_won[0]) + " White"
+    black_text = str(gamestate.games_won[1]) + " Black +" + str(abs(material)) if material < 0 else str(gamestate.games_won[1]) + " Black"
+    text_1 = font.render(white_text, False, p.Color("black"))
+    text_2 = font.render(black_text, False, p.Color("black"))
+    text_1_rect = text_1.get_rect()
+    text_2_rect = text_2.get_rect()
+    text_1_rect.center = white_center
+    text_2_rect.center = black_center
+    screen.blit(text_1, text_1_rect)
+    screen.blit(text_2, text_2_rect)
 

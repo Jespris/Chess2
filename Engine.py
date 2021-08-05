@@ -2,6 +2,7 @@
 Contains game logic and AI
 """
 import random
+import SmartMoveFinder
 
 from win32api import GetSystemMetrics
 
@@ -14,7 +15,7 @@ int_to_string = {0: '--', 1: 'wp', 2: 'wr', 3: 'wn', 4: 'wb', 5: 'wq', 6: 'wk',
 
 
 class GameState:
-    def __init__(self, width, height, sq_size):
+    def __init__(self, width, height, sq_size, games_won):
         self.width = width
         self.height = height
         self.squaresize = sq_size
@@ -35,6 +36,7 @@ class GameState:
         self.move_log = []
         self.opening = ''
         self.material_balance = 0  # negative = black is up material
+        self.games_won = [games_won[0], games_won[1]]  # for ALAP testing
         self.white_to_move = True
         self.white_king = (7, 4)
         self.black_king = (0, 4)
@@ -97,6 +99,9 @@ class GameState:
 
         # store board state
         self.boardstates_log.append(self.get_boardstate())
+
+        # update material balance
+        self.material_balance = SmartMoveFinder.score_material(self.board)
 
     def update_castle_rights(self, move):
         if move.piece_moved == 6:  # king
@@ -166,6 +171,9 @@ class GameState:
 
         self.checkmate = False
         self.draw = False
+
+        # update material balance
+        self.material_balance = SmartMoveFinder.score_material(self.board)
 
     """
     Listing legal moves
@@ -786,8 +794,6 @@ class Move:
         if isinstance(other, Move):
             return self.move_ID == other.move_ID
         return False
-
-    # TODO: better notation
 
     def get_notation(self):
         if self.is_castle_move:

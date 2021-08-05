@@ -16,7 +16,7 @@ def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     p.display.set_caption('Chess2')
     screen.fill(p.Color("Gray"))
-    gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
+    gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE, [0, 0])
     gamestate.get_boardstate()
     gamestate.eval_log.append(SmartMoveFinder.score_board(gamestate))
     clock = p.time.Clock()
@@ -89,7 +89,7 @@ def main():
                                 mouse_clicks = [sq_selected]
                 reset_pos, reset_size = Display.get_reset_button()
                 if reset_pos[0] < mouse_pos[0] < reset_pos[0] + reset_size[0] and reset_pos[1] < mouse_pos[1] < reset_pos[1] + reset_size[1]:
-                    gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE)
+                    gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE, gamestate.games_won)
                     legal_moves = gamestate.get_legal_moves()
                     sq_selected = ()
                     mouse_clicks = []
@@ -161,12 +161,20 @@ def main():
 
         # Checkmate and draw
         if gamestate.checkmate:
-            game_over = True
             if gamestate.white_to_move:
                 Display.display_game_over(screen, gamestate, "Black wins by checkmate!")
+                if not game_over:
+                    gamestate.games_won[1] += 1
             else:
                 Display.display_game_over(screen, gamestate, "White wins by checkmate!")
+                if not game_over:
+                    gamestate.games_won[0] += 1
+            game_over = True
         elif gamestate.draw:
+            # only add scores once
+            if not game_over:
+                gamestate.games_won[0] += 0.5
+                gamestate.games_won[1] += 0.5
             game_over = True
             Display.display_game_over(screen, gamestate, "Draw!")
 
