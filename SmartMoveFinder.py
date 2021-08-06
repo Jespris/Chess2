@@ -152,7 +152,6 @@ def find_best_move(gamestate, legal_moves, return_queue):
                 two_moves_ago = gamestate.move_log[-4].get_notation()
                 if gamestate.move_log[-2].get_notation() == gamestate.move_log[-6].get_notation() \
                         and next_move.get_notation() == two_moves_ago:
-                    print("Previous repetitional moves by same color", two_moves_ago)
                     print("Best move found maybe leads to draw!")
                     board_eval = score_board(gamestate)
                     if (board_eval > 1 and gamestate.white_to_move) or (board_eval < -1 and not gamestate.white_to_move):
@@ -161,6 +160,8 @@ def find_best_move(gamestate, legal_moves, return_queue):
                         legal_moves_best_removed = remove_legal_move(legal_moves, next_move)
                         find_move_nega_max_alpha_beta(gamestate, legal_moves_best_removed, actual_depth, -CHECKMATE,
                                                       CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
+                    else:
+                        print("This position is not good enough to play for a win...")
                 else:
                     print("Best move isn't threefold repetition!")
         print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)

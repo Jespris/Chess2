@@ -26,7 +26,7 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = True
+    white_human = False
     black_human = False
     play_alap = True
     show_eval = True
@@ -174,16 +174,19 @@ def main():
                 Display.display_game_over(screen, gamestate, "Black wins by checkmate!")
                 if not game_over:
                     gamestate.games_won[1] += 1
+                    print("Black won!")
             else:
                 Display.display_game_over(screen, gamestate, "White wins by checkmate!")
                 if not game_over:
                     gamestate.games_won[0] += 1
+                    print("White won!")
             game_over = True
         elif gamestate.draw:
             # only add scores once
             if not game_over:
                 gamestate.games_won[0] += 0.5
                 gamestate.games_won[1] += 0.5
+                print("Draw")
             game_over = True
             Display.display_game_over(screen, gamestate, "Draw!")
 
@@ -191,6 +194,9 @@ def main():
             gamestate = Engine.GameState(WIDTH, HEIGHT, SQ_SIZE, gamestate.games_won)
             legal_moves = gamestate.get_legal_moves()
             game_over = False
+            print("==================================================================\n"
+                  "======================   NEW GAME   ==============================\n"
+                  "==================================================================")
 
         clock.tick(FPS)
         p.display.flip()
