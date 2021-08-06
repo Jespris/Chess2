@@ -39,6 +39,7 @@ class GameState:
         self.games_won = [games_won[0], games_won[1]]  # for ALAP testing
         self.white_to_move = True
         self.in_opening = True
+        self.endgame = False
         self.white_king = (7, 4)
         self.black_king = (0, 4)
         self.castle_rights = CastleRights(True, True, True, True)
@@ -741,6 +742,17 @@ class GameState:
                 board_string += str(self.board[row][col])
         board_state = (board_string, self.castle_rights_log[-1].castles_ID, self.en_passant_possible, self.white_to_move)
         return board_state
+
+    def evaluate_endgame(self):
+        pieces = 0
+        for row in range(8):
+            for col in range(8):
+                if self.board[row][col] != 0 and abs(self.board[row][col]) != 1:  # don't count pawns
+                    pieces += 1
+        if pieces > 5:
+            self.endgame = False
+        else:
+            self.endgame = True
 
 
 class CastleRights:  # for storing the info about castling rights
