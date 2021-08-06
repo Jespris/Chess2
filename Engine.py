@@ -613,6 +613,7 @@ class GameState:
             moves_so_far = []
             for move in self.move_log:
                 moves_so_far.append(move.get_notation())
+
             ruy_lopez = {'e4': 'e5',
                          'e5': 'Nf3',
                          'Nf3': 'Nc6',
@@ -656,9 +657,31 @@ class GameState:
                      'Nf6': 'Bg2',
                      'Bg2': 'g6',
                      'g6': ('Nf3', 'c3', 'c4', 'Nd2')}
-            sicilian = {'e4': 'c5',
+            dragon =    {'e4': 'c5',
                         'c5': 'Nf3',
-                        'Nf3': ('Nc6', 'd6', 'e6', 'g6')}
+                        'Nf3': 'g6',
+                        'g6': 'd4',
+                        'd4': 'cxd4',
+                        'cxd4': 'Nxd4',
+                        'Nxd4': 'Nc6',
+                        'Nc6': ('Nc3', 'c4')}
+            open_sicilian = {'e4': 'c5',
+                            'c5': 'Nf3',
+                            'Nf3': 'Nc6',
+                            'Nc6': 'd4',
+                            'd4': 'cxd4',
+                            'cxd4': 'Nxd4',
+                            'Nxd4': ('Nf6', 'e6', 'g6', 'e5', 'Qb6', 'Qc7')}
+            najdorf =   {'e4': 'c5',
+                        'c5': 'Nf3',
+                        'Nf3': 'd6',
+                         'd6': 'd4',
+                         'd4': 'cxd4',
+                         'cxd4': 'Nxd4',
+                         'Nxd4': 'Nf6',
+                         'Nf6': 'Nc3',
+                         'Nc3': 'a6',
+                         'a6': ('Bg5', 'Be3', 'Be2', 'Bc4', 'h3', 'h4', 'g3', 'f3', 'a4')}
             scandinavian = {'e4': 'd5',
                             'd5': 'exd5',
                             'exd5': 'Qxd5',
@@ -667,17 +690,57 @@ class GameState:
                             'Qa5': ('d4', 'Bc4', 'Nf3', 'g3')}
             kings_pawn = {'e4': 'e5',
                           'e5': ('Nf3', 'd4', 'Nc3')}
+            agincourt = {'c4': 'e6',
+                         'e6': 'd4',
+                         'd4': 'Nf6',
+                         'Nf6': ('Nf3', 'Nc3', 'g3')}
+            old_benoni = {'d4': 'c5',
+                          'c5': 'd5',
+                          'd5': ('e5', 'Nf6', 'd6', 'g6')}
+            kings_knight_english = {'c4': 'Nf6',
+                                    'Nf6': 'Nf3',
+                                    'Nf3': ('g6', 'e6', 'c5', 'c6', 'b6', 'd6')}
+            pirc = {'e4': 'd6',
+                    'd6': 'd4',
+                    'd4': 'Nf6',
+                    'Nf6': 'Nc3',
+                    'Nc3': 'g6',
+                    'g6': ('f4', 'Nf3', 'Be3', 'Bg5', 'g3')}
+            nimzo_larsen = {'Nf3': 'Nf6',
+                            'Nf6': 'b3',
+                            'b3': ('d5', 'g6', 'c5')}
+            tartakower = {'d4': 'd6',
+                          'd6': 'Nf3',
+                          'Nf3': 'Nf6',
+                          'Nf6': 'c4',
+                          'c4': 'g6',
+                          'g6': 'Nc3',
+                          'Nc3': 'Bg7',
+                          'Bg7': 'e4',
+                          'e4': '0-0',
+                          '0-0': ('Be2', 'h3', 'Be3')}
+            zukertort = {'Nf3': 'd5',
+                         'd5': 'd4',
+                         'd4': 'Nf6',
+                         'Nf6': 'c4',
+                         'c4': ('c6', 'e6', 'dxc4', 'g6')}
 
             openings = [kings_pawn, ruy_lopez, french_defence, caro_kann, kings_gambit, reti_main, queens_gambit, english,
-                        modern_defence, dutch, sicilian, scandinavian, reti_side, kings_english]
+                        modern_defence, dutch, dragon, scandinavian, reti_side, kings_english, agincourt, old_benoni,
+                        kings_knight_english, pirc, open_sicilian, najdorf, nimzo_larsen, tartakower, zukertort]
             openings_to_opening = [(kings_pawn, "King's Pawn Opening"), (ruy_lopez, 'Ruy Lopez Opening'),
                                    (french_defence, "French Defence"), (caro_kann, "Caro-Kann Defence"),
                                    (kings_gambit,"King's Gambit"), (reti_main, "Réti Opening: King's Indian Attack"),
                                    (reti_side, "Réti Opening"), (queens_gambit, "Queen's Gambit"),
-                                   (english, "English Opening: Symmetrical Variation"),
-                                   (kings_english, "English Opening: King's English Variation"),
+                                   (english, "English Opening: Symmetrical"),
+                                   (kings_english, "English Opening: King's English"),
                                    (modern_defence, "Modern Defence"), (dutch, "Dutch Defence"),
-                                   (sicilian, "Sicilian Defence"), (scandinavian, "Scandinavian Defence")]
+                                   (dragon, "Sicilian Defence: Accelerated Dragon"), (scandinavian, "Scandinavian Defence"),
+                                   (agincourt, "Indian Game: East Indian Defence"), (old_benoni, "Old Benoni Defence"),
+                                   (kings_knight_english, "English Opening, King's Knight"),
+                                   (pirc, "Pirc Defence"), (open_sicilian, "Sicilian Defence: Open"),
+                                   (najdorf, "Sicilian Defence: Najdorf"), (nimzo_larsen, "Réti Opening: Nimzo-Larsen"),
+                                   (tartakower, "King's Indian: Normal"), (zukertort, "Queen's Pawn: Symmetrical")]
             random.shuffle(openings)
             for opening in openings:
                 next_move_in_line = self.get_next_opening_line_move(opening, moves_so_far)
