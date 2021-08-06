@@ -26,7 +26,7 @@ def main():
     move_made = False
     Display.load_images()
     game_over = False
-    white_human = False
+    white_human = True
     black_human = False
     play_alap = True
     show_eval = True
@@ -147,9 +147,10 @@ def main():
 
             if not move_finder_process.is_alive():
                 print("done thinking")
-                (AI_move, board_states_depth, in_opening) = return_queue.get()
+                (AI_move, board_states_depth, opening_name, in_opening) = return_queue.get()
                 gamestate.states_depth_log.append(board_states_depth)
                 gamestate.in_opening = in_opening
+                gamestate.opening = opening_name
                 if AI_move is None:
                     AI_move = SmartMoveFinder.find_random_move(legal_moves)
                 gamestate.make_move(AI_move)

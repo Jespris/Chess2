@@ -665,13 +665,16 @@ class GameState:
                             'Qxd5': 'Nc3',
                             'Nc3': 'Qa5',
                             'Qa5': ('d4', 'Bc4', 'Nf3', 'g3')}
+            kings_pawn = {'e4': 'e5',
+                          'e5': ('Nf3', 'd4', 'Nc3')}
 
-            openings = [ruy_lopez, french_defence, caro_kann, kings_gambit, reti_main, queens_gambit, english,
+            openings = [kings_pawn, ruy_lopez, french_defence, caro_kann, kings_gambit, reti_main, queens_gambit, english,
                         modern_defence, dutch, sicilian, scandinavian, reti_side, kings_english]
-            openings_to_opening = [(ruy_lopez, 'Ruy Lopez Opening'), (french_defence, "French Defence"),
-                                   (caro_kann, "Caro-Kann Defence"), (kings_gambit,"King's Gambit"),
-                                   (reti_main, "Réti Opening: King's Indian Attack"), (reti_side, "Réti Opening"),
-                                   (queens_gambit, "Queen's Gambit"), (english, "English Opening: Symmetrical Variation"),
+            openings_to_opening = [(kings_pawn, "King's Pawn Opening"), (ruy_lopez, 'Ruy Lopez Opening'),
+                                   (french_defence, "French Defence"), (caro_kann, "Caro-Kann Defence"),
+                                   (kings_gambit,"King's Gambit"), (reti_main, "Réti Opening: King's Indian Attack"),
+                                   (reti_side, "Réti Opening"), (queens_gambit, "Queen's Gambit"),
+                                   (english, "English Opening: Symmetrical Variation"),
                                    (kings_english, "English Opening: King's English Variation"),
                                    (modern_defence, "Modern Defence"), (dutch, "Dutch Defence"),
                                    (sicilian, "Sicilian Defence"), (scandinavian, "Scandinavian Defence")]
@@ -707,6 +710,9 @@ class GameState:
                 elif first_move == 'e4':
                     self.opening = "King's Pawn Opening"
                     black_reply = ['Nf6', 'd5', 'e6', 'd6', 'g6', 'c5', 'e5', 'c6']
+                elif first_move == 'f4':
+                    self.opening = "Bird's opening"
+                    black_reply = ['d5', 'Nf6', 'e6', 'g6', 'c5']
                 if black_reply:
                     next_move = black_reply[random.randint(0, len(black_reply) - 1)]
                 else:
@@ -717,9 +723,11 @@ class GameState:
         print("Next move should be", next_move)
         if next_move is None:
             in_opening = False
+            self.in_opening = False
         elif next_move:
             in_opening = True
-        return next_move, in_opening
+            self.in_opening = True
+        return next_move, self.opening, in_opening
 
     def get_next_opening_line_move(self, opening, moves_so_far):
         if len(moves_so_far) >= 2:

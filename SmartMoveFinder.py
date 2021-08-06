@@ -124,8 +124,9 @@ def find_random_move(legal_moves):
 def find_best_move(gamestate, legal_moves, return_queue):
     global next_move, counter, ENDGAME, BOARD_HASH, board_state_copies
     next_move = None
-    in_opening = False
     actual_depth = 1
+    opening_name = gamestate.opening
+    in_opening = False
     counter = 0
     if len(legal_moves) == 1:
         next_move = legal_moves[0]
@@ -134,7 +135,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
 
         if gamestate.in_opening:  # opening
             print("In opening prep:", str(gamestate.in_opening))
-            next_move_in_opening, in_opening = gamestate.get_opening()
+            next_move_in_opening, opening_name, in_opening = gamestate.get_opening()
             if next_move_in_opening:
                 for move in legal_moves:
                     if move.get_notation() == next_move_in_opening:  # check if this move results in the same notation the opening line move is
@@ -143,14 +144,15 @@ def find_best_move(gamestate, legal_moves, return_queue):
 
         if not next_move:
             gamestate.in_opening = False
-            actual_depth = 3 if not gamestate.endgame else 6
+            actual_depth = 4 if not gamestate.endgame else 5
             find_move_nega_max_alpha_beta(gamestate, legal_moves, actual_depth, -CHECKMATE, CHECKMATE, 1 if gamestate.white_to_move else -1, actual_depth)
         # check if the move leads to a draw, if so, change if it is a winning position
         if next_move is not None:
             if len(gamestate.move_log) > 8:
                 two_moves_ago = gamestate.move_log[-4].get_notation()
-                print("Previous repetitional moves by same color", two_moves_ago)
-                if next_move.get_notation() == two_moves_ago:
+                if gamestate.move_log[-2].get_notation() == gamestate.move_log[-6].get_notation() \
+                        and next_move.get_notation() == two_moves_ago:
+                    print("Previous repetitional moves by same color", two_moves_ago)
                     print("Best move found maybe leads to draw!")
                     board_eval = score_board(gamestate)
                     if (board_eval > 1 and gamestate.white_to_move) or (board_eval < -1 and not gamestate.white_to_move):
@@ -162,7 +164,7 @@ def find_best_move(gamestate, legal_moves, return_queue):
                 else:
                     print("Best move isn't threefold repetition!")
         print("Looked at", counter, "boardstates,", board_state_copies, "skipped copies, depth", actual_depth)
-    return_queue.put((next_move, (counter, actual_depth), in_opening))
+    return_queue.put((next_move, (counter, actual_depth), opening_name, in_opening))
 
 
 def remove_legal_move(legal_moves, move_to_remove):
